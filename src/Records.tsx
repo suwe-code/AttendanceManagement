@@ -80,9 +80,14 @@ export default function Records() {
                 <p style={{ color: '#fff', fontSize: 14, margin: 0, fontWeight: 600 }}>{r.user_id}</p>
                 <span style={{ color: '#4ade80', fontSize: 10, fontWeight: 500 }}>● Logged</span>
               </div>
-              <p style={{ color: '#555', fontSize: 11, margin: '0 0 2px', fontFamily: 'monospace' }}>
-                {r.lat.toFixed(4)} , {r.lng.toFixed(4)}
-              </p>
+              <a
+                href={`https://www.google.com/maps?q=${r.lat},${r.lng}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: '#3b82f6', fontSize: 11, fontFamily: 'monospace', textDecoration: 'none' }}
+              >
+                {r.lat.toFixed(4)} , {r.lng.toFixed(4)} ↗
+              </a>
               <div style={{ display: 'flex', gap: 8 }}>
                 <span style={{ color: '#383838', fontSize: 11 }}>{formatDate(r.captured_at)}</span>
                 <span style={{ color: '#383838', fontSize: 11 }}>{formatTime(r.captured_at)}</span>
