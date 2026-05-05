@@ -32,34 +32,15 @@ export default function App() {
         {tab === 'attendance' ? <Attendance /> : <Records />}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: `1px solid ${T.border}`, background: T.bg, flexShrink: 0 }}>
-        <button
+      <button
           onClick={() => setTab('attendance')}
-          style={{
-            padding: '13px 0',
-            background: tab === 'attendance' ? T.surface : 'transparent',
-            color: tab === 'attendance' ? T.text : T.textMuted,
-            border: 'none',
-            borderRight: `1px solid ${T.border}`,
-            borderTop: tab === 'attendance' ? `1px solid ${T.text}` : `1px solid transparent`,
-            ...caps,
-            color: tab === 'attendance' ? T.text : T.textMuted,
-            cursor: 'pointer'
-          }}
+          style={{ padding: '13px 0', background: tab === 'attendance' ? T.surface : 'transparent', color: tab === 'attendance' ? T.text : T.textMuted, border: 'none', borderRight: `1px solid ${T.border}`, borderTop: tab === 'attendance' ? `1px solid ${T.text}` : '1px solid transparent', fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: 'pointer' }}
         >
           CAMERA
         </button>
         <button
           onClick={() => setTab('records')}
-          style={{
-            padding: '13px 0',
-            background: tab === 'records' ? T.surface : 'transparent',
-            color: tab === 'records' ? T.text : T.textMuted,
-            border: 'none',
-            borderTop: tab === 'records' ? `1px solid ${T.text}` : `1px solid transparent`,
-            ...caps,
-            color: tab === 'records' ? T.text : T.textMuted,
-            cursor: 'pointer'
-          }}
+          style={{ padding: '13px 0', background: tab === 'records' ? T.surface : 'transparent', color: tab === 'records' ? T.text : T.textMuted, border: 'none', borderTop: tab === 'records' ? `1px solid ${T.text}` : '1px solid transparent', fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: 'pointer' }}
         >
           RECORDS
         </button>

@@ -133,7 +133,7 @@ export default function Attendance() {
         </div>
 
         {message && (
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '12px 16px', background: status === 'success' ? T.positive : T.negative, color: T.invertText, ...caps, color: T.invertText }}>
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '12px 16px', background: status === 'success' ? T.positive : T.negative, color: T.invertText, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const }}>
             {message.toUpperCase()}
           </div>
         )}
@@ -170,7 +170,7 @@ export default function Attendance() {
         <button
           onClick={handleLog}
           disabled={status === 'loading'}
-          style={{ width: '100%', padding: '15px 16px', background: status === 'loading' ? T.surface : T.invertBg, color: status === 'loading' ? T.textMuted : T.invertText, border: 'none', ...caps, color: status === 'loading' ? T.textMuted : T.invertText, fontSize: 11, cursor: status === 'loading' ? 'not-allowed' : 'pointer' }}
+          style={{ width: '100%', padding: '15px 16px', background: status === 'loading' ? T.surface : T.invertBg, color: status === 'loading' ? T.textMuted : T.invertText, border: 'none', fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: status === 'loading' ? 'not-allowed' : 'pointer' }}
         >
           {status === 'loading' ? 'LOGGING' : 'LOG ATTENDANCE'}
         </button>

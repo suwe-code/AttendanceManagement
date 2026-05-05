@@ -14,10 +14,6 @@ const caps: React.CSSProperties = {
   letterSpacing: '-0.04em', textTransform: 'uppercase', color: T.text2
 }
 
-const mono: React.CSSProperties = {
-  fontFamily: "'JetBrains Mono', monospace", letterSpacing: '-0.02em'
-}
-
 export default function Login() {
   const [userId, setUserId] = useState('')
   const [password, setPassword] = useState('')
@@ -84,17 +80,17 @@ export default function Login() {
         )}
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, marginTop: 1 }}>
-          <button
+        <button
             onClick={handleLogin}
             disabled={loading}
-            style={{ padding: '13px 16px', background: T.invertBg, color: T.invertText, border: 'none', ...caps, color: T.invertText, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1 }}
+            style={{ padding: '13px 16px', background: T.invertBg, color: T.invertText, border: 'none', fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1 }}
           >
             {loading ? 'WAIT' : 'SIGN IN'}
           </button>
           <button
             onClick={handleSignUp}
             disabled={loading}
-            style={{ padding: '13px 16px', background: 'transparent', color: T.text3, border: `1px solid ${T.border}`, ...caps, color: T.text3, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1 }}
+            style={{ padding: '13px 16px', background: 'transparent', color: T.text3, border: `1px solid ${T.border}`, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1 }}
           >
             CREATE
           </button>
