@@ -10,11 +10,6 @@ const T = {
   invertBg: '#ffffff', invertText: '#0a0a0a', surface: '#1a1a1a'
 }
 
-const caps: React.CSSProperties = {
-  fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500,
-  letterSpacing: '-0.04em', textTransform: 'uppercase'
-}
-
 export default function App() {
   const [session, setSession] = useState<any>(null)
   const [tab, setTab] = useState<'attendance' | 'records'>('attendance')
