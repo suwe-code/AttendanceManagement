@@ -117,7 +117,7 @@ export default function Records() {
                 {formatDate(r.captured_at)} · {formatTime(r.captured_at)}
               </p>
             </div>
-            <div style={{ padding: '9px 12px', display: 'flex', alignItems: 'center', borderLeft: `1px solid ${T.divider}`, flexShrink: 0 }}>
+            <div style={{ padding: '9px 12px', display: 'flex', alignItems: 'center', borderLeft: `1px solid ${T.divider}`, flexShrink: 0, minWidth: 48, justifyContent: 'flex-end' }}>
               <p style={{ ...mono, fontSize: 11, color: T.textMuted }}>#{records.length - i}</p>
             </div>
           </div>
