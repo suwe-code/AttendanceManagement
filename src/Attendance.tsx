@@ -10,6 +10,7 @@ export default function Attendance() {
   const [camReady, setCamReady] = useState(false)
   const [note, setNote] = useState('')
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
+  const [time, setTime] = useState(new Date())
 
   useEffect(() => {
     startCamera(facingMode)
@@ -17,6 +18,8 @@ export default function Attendance() {
       pos => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => {}
     )
+    const tick = setInterval(() => setTime(new Date()), 1000)
+    return () => clearInterval(tick)
   }, [])
 
   function startCamera(facing: 'environment' | 'user') {
@@ -55,13 +58,12 @@ export default function Attendance() {
   }
 
   async function handleLog() {
-    if (!coords) { setMessage('Waiting for GPS...') ; return }
+    if (!coords) { setMessage('Waiting for GPS') ; return }
     const video = videoRef.current
     const canvas = canvasRef.current
     if (!video || !canvas) return
 
-    setStatus('loading')
-    setMessage('')
+    setStatus('loading') ; setMessage('')
     canvas.width = video.videoWidth
     canvas.height = video.videoHeight
     canvas.getContext('2d')?.drawImage(video, 0, 0)
@@ -72,14 +74,9 @@ export default function Attendance() {
     const fileName = `${userId}_${Date.now()}.jpg`
 
     const { error: uploadError } = await supabase.storage
-      .from('photos')
-      .upload(fileName, blob, { contentType: 'image/jpeg' })
+      .from('photos').upload(fileName, blob, { contentType: 'image/jpeg' })
 
-    if (uploadError) {
-      setStatus('error')
-      setMessage('Upload failed : ' + uploadError.message)
-      return
-    }
+    if (uploadError) { setStatus('error') ; setMessage('Upload failed') ; return }
 
     const { data: urlData } = supabase.storage.from('photos').getPublicUrl(fileName)
 
@@ -94,111 +91,118 @@ export default function Attendance() {
 
     if (insertError) { setStatus('error') ; setMessage('Save failed') ; return }
 
-    setStatus('success')
-    setMessage('Attendance logged successfully')
+    setStatus('success') ; setMessage('Attendance logged')
     setNote('')
     setTimeout(() => { setStatus('idle') ; setMessage('') }, 3000)
   }
 
+  const capLabel: React.CSSProperties = {
+    fontFamily: 'Inter, sans-serif',
+    fontSize: 11,
+    fontWeight: 500,
+    letterSpacing: '-0.04em',
+    textTransform: 'uppercase',
+    color: '#4a4a4a',
+    margin: '0 0 4px'
+  }
+
+  const monoVal: React.CSSProperties = {
+    fontFamily: 'JetBrains Mono, monospace',
+    fontSize: 13,
+    fontWeight: 500,
+    letterSpacing: '-0.02em',
+    color: '#ffffff',
+    margin: 0
+  }
+
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#000', position: 'relative' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#0d0d0d' }}>
+
       <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-        />
+        <video ref={videoRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         <canvas ref={canvasRef} style={{ display: 'none' }} />
 
         {!camReady && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111' }}>
-            <p style={{ color: '#555', fontSize: 14 }}>Starting camera...</p>
+          <div style={{ position: 'absolute', inset: 0, background: '#0d0d0d', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '-0.04em', textTransform: 'uppercase', color: '#4a4a4a' }}>INITIALISING CAMERA</p>
           </div>
         )}
 
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '16px', background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: 16, background: 'rgba(13,13,13,0.8)', borderBottom: '1px solid #2a2a2a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <p style={{ color: '#fff', fontSize: 11, margin: 0, opacity: 0.7, textTransform: 'uppercase', letterSpacing: 1 }}>Location</p>
-            <p style={{ color: '#fff', fontSize: 13, margin: '2px 0 0', fontWeight: 500 }}>
-              {coords ? `${coords.lat.toFixed(5)} , ${coords.lng.toFixed(5)}` : 'Acquiring GPS...'}
-            </p>
+            <p style={capLabel}>LOCATION</p>
+            <p style={monoVal}>{coords ? `${coords.lat.toFixed(5)},${coords.lng.toFixed(5)}` : 'ACQUIRING'}</p>
           </div>
-          <button
-            onClick={flipCamera}
-            style={{
-              background: 'rgba(255,255,255,0.15)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: 20, color: '#fff',
-              fontSize: 18, width: 40, height: 40,
-              cursor: 'pointer', display: 'flex',
-              alignItems: 'center', justifyContent: 'center'
-            }}
-          >
-            ⟳
+          <button onClick={flipCamera} style={{ background: 'transparent', border: '1px solid #2a2a2a', padding: '6px 12px', color: '#6b6b6b', fontSize: 11, fontFamily: 'Inter, sans-serif', letterSpacing: '-0.04em', textTransform: 'uppercase', cursor: 'pointer', borderRadius: 0 }}>
+            FLIP
           </button>
         </div>
 
         {message && (
           <div style={{
-            position: 'absolute', top: 70, left: 16, right: 16,
-            background: status === 'success' ? 'rgba(16,185,129,0.9)' : 'rgba(239,68,68,0.9)',
-            padding: '12px 16px', borderRadius: 10, color: '#fff', fontSize: 13, textAlign: 'center'
+            position: 'absolute', bottom: 0, left: 0, right: 0,
+            padding: '12px 16px',
+            background: status === 'success' ? '#22c55e' : '#ef4444',
+            color: '#0d0d0d',
+            fontSize: 11, fontFamily: 'Inter, sans-serif',
+            fontWeight: 500, letterSpacing: '-0.04em',
+            textTransform: 'uppercase'
           }}>
             {message}
           </div>
         )}
       </div>
 
-      <div style={{ padding: '16px', background: '#0a0a0a', borderTop: '1px solid #1a1a1a' }}>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-          <div style={{ flex: 1, background: '#111', borderRadius: 8, padding: '10px 14px' }}>
-            <p style={{ color: '#555', fontSize: 10, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>GPS</p>
-            <p style={{ color: coords ? '#4ade80' : '#ef4444', fontSize: 12, margin: 0, fontWeight: 500 }}>
-              {coords ? 'Ready' : 'Waiting'}
-            </p>
+      <div style={{ background: '#0d0d0d', borderTop: '1px solid #2a2a2a' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: '1px solid #1f1f1f' }}>
+          <div style={{ padding: 16, borderRight: '1px solid #1f1f1f' }}>
+            <p style={capLabel}>GPS</p>
+            <p style={{ ...monoVal, color: coords ? '#22c55e' : '#ef4444' }}>{coords ? 'READY' : 'WAIT'}</p>
           </div>
-          <div style={{ flex: 1, background: '#111', borderRadius: 8, padding: '10px 14px' }}>
-            <p style={{ color: '#555', fontSize: 10, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Camera</p>
-            <p style={{ color: camReady ? '#4ade80' : '#ef4444', fontSize: 12, margin: 0, fontWeight: 500 }}>
-              {camReady ? 'Ready' : 'Starting'}
-            </p>
+          <div style={{ padding: 16, borderRight: '1px solid #1f1f1f' }}>
+            <p style={capLabel}>CAMERA</p>
+            <p style={{ ...monoVal, color: camReady ? '#22c55e' : '#ef4444' }}>{camReady ? 'READY' : 'WAIT'}</p>
           </div>
-          <div style={{ flex: 1, background: '#111', borderRadius: 8, padding: '10px 14px' }}>
-            <p style={{ color: '#555', fontSize: 10, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: 1 }}>Time</p>
-            <p style={{ color: '#fff', fontSize: 12, margin: 0, fontWeight: 500 }}>
-              {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </p>
+          <div style={{ padding: 16 }}>
+            <p style={capLabel}>TIME</p>
+            <p style={monoVal}>{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
           </div>
         </div>
 
-        <textarea
-          value={note}
-          onChange={e => setNote(e.target.value)}
-          placeholder="Add a note ( optional )"
-          rows={2}
-          style={{
-            width: '100%', marginBottom: 10, padding: '10px 14px',
-            background: '#111', border: '1px solid #1e1e1e',
-            borderRadius: 10, color: '#fff', fontSize: 13,
-            resize: 'none', outline: 'none', boxSizing: 'border-box',
-            fontFamily: 'system-ui, sans-serif'
-          }}
-        />
+        <div style={{ padding: 16, borderBottom: '1px solid #1f1f1f' }}>
+          <textarea
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            placeholder="Note ( optional )"
+            rows={2}
+            style={{
+              width: '100%', padding: '10px 0',
+              background: 'transparent',
+              border: 'none', borderBottom: '1px solid #2a2a2a',
+              color: '#9a9a9a', fontSize: 13,
+              fontFamily: 'Inter, sans-serif',
+              letterSpacing: '-0.02em',
+              resize: 'none', outline: 'none',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
 
         <button
           onClick={handleLog}
           disabled={status === 'loading'}
           style={{
-            width: '100%', padding: '15px', borderRadius: 12,
-            background: status === 'loading' ? '#222' : '#fff',
-            color: status === 'loading' ? '#555' : '#000',
-            border: 'none', fontSize: 15, fontWeight: 600,
-            cursor: status === 'loading' ? 'not-allowed' : 'pointer',
-            letterSpacing: 0.3
+            width: '100%', padding: '16px',
+            background: status === 'loading' ? '#1a1a1a' : '#ffffff',
+            color: status === 'loading' ? '#4a4a4a' : '#0d0d0d',
+            border: 'none', borderRadius: 0,
+            fontSize: 11, fontFamily: 'Inter, sans-serif',
+            fontWeight: 500, letterSpacing: '-0.04em',
+            textTransform: 'uppercase' as const,
+            cursor: status === 'loading' ? 'not-allowed' : 'pointer'
           }}
         >
-          {status === 'loading' ? 'Logging attendance...' : 'Log Attendance'}
+          {status === 'loading' ? 'LOGGING' : 'LOG ATTENDANCE'}
         </button>
       </div>
     </div>

@@ -16,16 +16,40 @@ export default function App() {
   if (!session) return <Login />
 
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', height: '100dvh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ width: '100%', height: '100dvh', display: 'flex', flexDirection: 'column', background: '#0d0d0d' }}>
       <div style={{ flex: 1, overflow: 'auto' }}>
         {tab === 'attendance' ? <Attendance /> : <Records />}
       </div>
-      <div style={{ display: 'flex', borderTop: '1px solid #333' }}>
-        <button onClick={() => setTab('attendance')} style={{ flex: 1, padding: 16, background: tab === 'attendance' ? '#1a1a1a' : 'transparent', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 14 }}>
-          Camera
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: '1px solid #2a2a2a', background: '#0d0d0d' }}>
+        <button
+          onClick={() => setTab('attendance')}
+          style={{
+            padding: '14px 0',
+            background: tab === 'attendance' ? '#ffffff' : 'transparent',
+            color: tab === 'attendance' ? '#0d0d0d' : '#4a4a4a',
+            border: 'none', borderRight: '1px solid #2a2a2a',
+            fontSize: 11, fontFamily: 'Inter, sans-serif',
+            fontWeight: 500, letterSpacing: '-0.04em',
+            textTransform: 'uppercase' as const,
+            cursor: 'pointer'
+          }}
+        >
+          CAMERA
         </button>
-        <button onClick={() => setTab('records')} style={{ flex: 1, padding: 16, background: tab === 'records' ? '#1a1a1a' : 'transparent', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 14 }}>
-          Records
+        <button
+          onClick={() => setTab('records')}
+          style={{
+            padding: '14px 0',
+            background: tab === 'records' ? '#ffffff' : 'transparent',
+            color: tab === 'records' ? '#0d0d0d' : '#4a4a4a',
+            border: 'none',
+            fontSize: 11, fontFamily: 'Inter, sans-serif',
+            fontWeight: 500, letterSpacing: '-0.04em',
+            textTransform: 'uppercase' as const,
+            cursor: 'pointer'
+          }}
+        >
+          RECORDS
         </button>
       </div>
     </div>
