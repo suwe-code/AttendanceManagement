@@ -25,9 +25,10 @@ export default function App() {
           onClick={() => setTab('attendance')}
           style={{
             padding: '14px 0',
-            background: tab === 'attendance' ? '#ffffff' : 'transparent',
-            color: tab === 'attendance' ? '#0d0d0d' : '#4a4a4a',
+            background: tab === 'attendance' ? '#1a1a1a' : 'transparent',
+            color: tab === 'attendance' ? '#ffffff' : '#4a4a4a',
             border: 'none', borderRight: '1px solid #2a2a2a',
+            borderTop: tab === 'attendance' ? '1px solid #ffffff' : '1px solid transparent',
             fontSize: 11, fontFamily: 'Inter, sans-serif',
             fontWeight: 500, letterSpacing: '-0.04em',
             textTransform: 'uppercase' as const,
@@ -40,9 +41,10 @@ export default function App() {
           onClick={() => setTab('records')}
           style={{
             padding: '14px 0',
-            background: tab === 'records' ? '#ffffff' : 'transparent',
-            color: tab === 'records' ? '#0d0d0d' : '#4a4a4a',
+            background: tab === 'records' ? '#1a1a1a' : 'transparent',
+            color: tab === 'records' ? '#ffffff' : '#4a4a4a',
             border: 'none',
+            borderTop: tab === 'records' ? '1px solid #ffffff' : '1px solid transparent',
             fontSize: 11, fontFamily: 'Inter, sans-serif',
             fontWeight: 500, letterSpacing: '-0.04em',
             textTransform: 'uppercase' as const,
