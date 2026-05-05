@@ -9,9 +9,23 @@ export default function Attendance() {
   const [message, setMessage] = useState('')
   const [camReady, setCamReady] = useState(false)
   const [note, setNote] = useState('')
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
 
   useEffect(() => {
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+    startCamera(facingMode)
+    navigator.geolocation.watchPosition(
+      pos => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {}
+    )
+  }, [])
+
+  function startCamera(facing: 'environment' | 'user') {
+    setCamReady(false)
+    if (videoRef.current?.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
+      tracks.forEach(t => t.stop())
+    }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: facing }, audio: false })
       .then(stream => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream
@@ -19,12 +33,13 @@ export default function Attendance() {
         }
       })
       .catch(() => setMessage('Camera access denied'))
+  }
 
-    navigator.geolocation.watchPosition(
-      pos => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => {}
-    )
-  }, [])
+  function flipCamera() {
+    const next = facingMode === 'environment' ? 'user' : 'environment'
+    setFacingMode(next)
+    startCamera(next)
+  }
 
   function compress(canvas: HTMLCanvasElement, targetBytes: number): Promise<{ blob: Blob }> {
     return new Promise(resolve => {
@@ -98,15 +113,30 @@ export default function Attendance() {
 
         {!camReady && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111' }}>
-            <p style={{ color: '#555', fontSize: 14 }}>{message || 'Starting camera...'}</p>
+            <p style={{ color: '#555', fontSize: 14 }}>Starting camera...</p>
           </div>
         )}
 
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '16px', background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)' }}>
-          <p style={{ color: '#fff', fontSize: 11, margin: 0, opacity: 0.7, textTransform: 'uppercase', letterSpacing: 1 }}>Location</p>
-          <p style={{ color: '#fff', fontSize: 13, margin: '2px 0 0', fontWeight: 500 }}>
-            {coords ? `${coords.lat.toFixed(5)} , ${coords.lng.toFixed(5)}` : 'Acquiring GPS...'}
-          </p>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '16px', background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <p style={{ color: '#fff', fontSize: 11, margin: 0, opacity: 0.7, textTransform: 'uppercase', letterSpacing: 1 }}>Location</p>
+            <p style={{ color: '#fff', fontSize: 13, margin: '2px 0 0', fontWeight: 500 }}>
+              {coords ? `${coords.lat.toFixed(5)} , ${coords.lng.toFixed(5)}` : 'Acquiring GPS...'}
+            </p>
+          </div>
+          <button
+            onClick={flipCamera}
+            style={{
+              background: 'rgba(255,255,255,0.15)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: 20, color: '#fff',
+              fontSize: 18, width: 40, height: 40,
+              cursor: 'pointer', display: 'flex',
+              alignItems: 'center', justifyContent: 'center'
+            }}
+          >
+            ⟳
+          </button>
         </div>
 
         {message && (
