@@ -1,7 +1,10 @@
-* {
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap');
+
+*, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  border-radius: 0 !important;
 }
 
 html, body, #root {
@@ -9,7 +12,22 @@ html, body, #root {
   height: 100%;
   min-height: 100dvh;
   background: #0d0d0d;
-  overflow: hidden;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: #ffffff;
   -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+input, textarea, button, select {
+  font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  border-radius: 0 !important;
+  outline: none;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #4a4a4a;
+  letter-spacing: -0.02em;
 }

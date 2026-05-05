@@ -1,6 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabase'
 
+const T = {
+  bg: '#0d0d0d', surface: '#1a1a1a', elevated: '#222222',
+  border: '#2a2a2a', divider: '#1f1f1f',
+  text: '#ffffff', text2: '#9a9a9a', text3: '#6b6b6b', textMuted: '#4a4a4a',
+  positive: '#22c55e', negative: '#ef4444',
+  invertBg: '#ffffff', invertText: '#0a0a0a'
+}
+
+const caps: React.CSSProperties = {
+  fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500,
+  letterSpacing: '-0.04em', textTransform: 'uppercase', margin: 0
+}
+
+const mono: React.CSSProperties = {
+  fontFamily: "'JetBrains Mono', monospace", letterSpacing: '-0.02em', margin: 0
+}
+
 export default function Attendance() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -25,8 +42,7 @@ export default function Attendance() {
   function startCamera(facing: 'environment' | 'user') {
     setCamReady(false)
     if (videoRef.current?.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
-      tracks.forEach(t => t.stop())
+      (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop())
     }
     navigator.mediaDevices.getUserMedia({ video: { facingMode: facing }, audio: false })
       .then(stream => {
@@ -75,132 +91,86 @@ export default function Attendance() {
 
     const { error: uploadError } = await supabase.storage
       .from('photos').upload(fileName, blob, { contentType: 'image/jpeg' })
-
     if (uploadError) { setStatus('error') ; setMessage('Upload failed') ; return }
 
     const { data: urlData } = supabase.storage.from('photos').getPublicUrl(fileName)
 
     const { error: insertError } = await supabase.from('attendance_log').insert({
-      user_id: userId,
-      image_url: urlData.publicUrl,
-      lat: coords.lat,
-      lng: coords.lng,
+      user_id: userId, image_url: urlData.publicUrl,
+      lat: coords.lat, lng: coords.lng,
       captured_at: new Date().toISOString(),
       note: note.trim() || null
     })
-
     if (insertError) { setStatus('error') ; setMessage('Save failed') ; return }
 
-    setStatus('success') ; setMessage('Attendance logged')
-    setNote('')
+    setStatus('success') ; setMessage('Attendance logged') ; setNote('')
     setTimeout(() => { setStatus('idle') ; setMessage('') }, 3000)
   }
 
-  const capLabel: React.CSSProperties = {
-    fontFamily: 'Inter, sans-serif',
-    fontSize: 11,
-    fontWeight: 500,
-    letterSpacing: '-0.04em',
-    textTransform: 'uppercase',
-    color: '#4a4a4a',
-    margin: '0 0 4px'
-  }
-
-  const monoVal: React.CSSProperties = {
-    fontFamily: 'JetBrains Mono, monospace',
-    fontSize: 13,
-    fontWeight: 500,
-    letterSpacing: '-0.02em',
-    color: '#ffffff',
-    margin: 0
-  }
-
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#0d0d0d' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#000' }}>
 
       <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
         <video ref={videoRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         <canvas ref={canvasRef} style={{ display: 'none' }} />
 
         {!camReady && (
-          <div style={{ position: 'absolute', inset: 0, background: '#0d0d0d', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '-0.04em', textTransform: 'uppercase', color: '#4a4a4a' }}>INITIALISING CAMERA</p>
+          <div style={{ position: 'absolute', inset: 0, background: T.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <p style={{ ...caps, color: T.textMuted }}>INITIALISING CAMERA</p>
           </div>
         )}
 
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: 16, background: 'rgba(13,13,13,0.8)', borderBottom: '1px solid #2a2a2a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, background: 'rgba(13,13,13,0.85)', borderBottom: `1px solid ${T.border}`, padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <p style={capLabel}>LOCATION</p>
-            <p style={monoVal}>{coords ? `${coords.lat.toFixed(5)},${coords.lng.toFixed(5)}` : 'ACQUIRING'}</p>
+            <p style={{ ...caps, color: T.textMuted, marginBottom: 3 }}>LOCATION</p>
+            <p style={{ ...mono, fontSize: 11, color: coords ? T.text : T.textMuted }}>
+              {coords ? `${coords.lat.toFixed(5)},${coords.lng.toFixed(5)}` : 'ACQUIRING'}
+            </p>
           </div>
-          <button onClick={flipCamera} style={{ background: 'transparent', border: '1px solid #2a2a2a', padding: '6px 12px', color: '#6b6b6b', fontSize: 11, fontFamily: 'Inter, sans-serif', letterSpacing: '-0.04em', textTransform: 'uppercase', cursor: 'pointer', borderRadius: 0 }}>
+          <button onClick={flipCamera} style={{ background: 'transparent', border: `1px solid ${T.border}`, padding: '5px 10px', color: T.text3, ...caps, cursor: 'pointer' }}>
             FLIP
           </button>
         </div>
 
         {message && (
-          <div style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0,
-            padding: '12px 16px',
-            background: status === 'success' ? '#22c55e' : '#ef4444',
-            color: '#0d0d0d',
-            fontSize: 11, fontFamily: 'Inter, sans-serif',
-            fontWeight: 500, letterSpacing: '-0.04em',
-            textTransform: 'uppercase'
-          }}>
-            {message}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '12px 16px', background: status === 'success' ? T.positive : T.negative, color: T.invertText, ...caps, color: T.invertText }}>
+            {message.toUpperCase()}
           </div>
         )}
       </div>
 
-      <div style={{ background: '#0d0d0d', borderTop: '1px solid #2a2a2a' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: '1px solid #1f1f1f' }}>
-          <div style={{ padding: 16, borderRight: '1px solid #1f1f1f' }}>
-            <p style={capLabel}>GPS</p>
-            <p style={{ ...monoVal, color: coords ? '#22c55e' : '#ef4444' }}>{coords ? 'READY' : 'WAIT'}</p>
-          </div>
-          <div style={{ padding: 16, borderRight: '1px solid #1f1f1f' }}>
-            <p style={capLabel}>CAMERA</p>
-            <p style={{ ...monoVal, color: camReady ? '#22c55e' : '#ef4444' }}>{camReady ? 'READY' : 'WAIT'}</p>
-          </div>
-          <div style={{ padding: 16 }}>
-            <p style={capLabel}>TIME</p>
-            <p style={monoVal}>{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
-          </div>
+      <div style={{ background: T.bg, borderTop: `1px solid ${T.border}` }}>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${T.divider}` }}>
+          {[
+            { label: 'GPS', value: coords ? 'READY' : 'WAIT', semantic: true, ok: !!coords },
+            { label: 'CAMERA', value: camReady ? 'READY' : 'WAIT', semantic: true, ok: camReady },
+            { label: 'TIME', value: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }), semantic: false, ok: true }
+          ].map((item, i) => (
+            <div key={item.label} style={{ padding: '10px 16px', borderRight: i < 2 ? `1px solid ${T.divider}` : 'none' }}>
+              <p style={{ ...caps, color: T.textMuted, marginBottom: 4 }}>{item.label}</p>
+              <p style={{ ...mono, fontSize: 13, fontWeight: 500, color: item.semantic ? (item.ok ? T.positive : T.negative) : T.text }}>
+                {item.value}
+              </p>
+            </div>
+          ))}
         </div>
 
-        <div style={{ padding: 16, borderBottom: '1px solid #1f1f1f' }}>
+        <div style={{ padding: '12px 16px', borderBottom: `1px solid ${T.divider}` }}>
+          <p style={{ ...caps, color: T.textMuted, marginBottom: 8 }}>NOTE</p>
           <textarea
             value={note}
             onChange={e => setNote(e.target.value)}
-            placeholder="Note ( optional )"
+            placeholder="Optional"
             rows={2}
-            style={{
-              width: '100%', padding: '10px 0',
-              background: 'transparent',
-              border: 'none', borderBottom: '1px solid #2a2a2a',
-              color: '#9a9a9a', fontSize: 13,
-              fontFamily: 'Inter, sans-serif',
-              letterSpacing: '-0.02em',
-              resize: 'none', outline: 'none',
-              boxSizing: 'border-box'
-            }}
+            style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: `1px solid ${T.border}`, color: T.text2, fontSize: 13, letterSpacing: '-0.02em', resize: 'none', padding: '0 0 8px', fontFamily: "'Inter', sans-serif" }}
           />
         </div>
 
         <button
           onClick={handleLog}
           disabled={status === 'loading'}
-          style={{
-            width: '100%', padding: '16px',
-            background: status === 'loading' ? '#1a1a1a' : '#ffffff',
-            color: status === 'loading' ? '#4a4a4a' : '#0d0d0d',
-            border: 'none', borderRadius: 0,
-            fontSize: 11, fontFamily: 'Inter, sans-serif',
-            fontWeight: 500, letterSpacing: '-0.04em',
-            textTransform: 'uppercase' as const,
-            cursor: status === 'loading' ? 'not-allowed' : 'pointer'
-          }}
+          style={{ width: '100%', padding: '15px 16px', background: status === 'loading' ? T.surface : T.invertBg, color: status === 'loading' ? T.textMuted : T.invertText, border: 'none', ...caps, color: status === 'loading' ? T.textMuted : T.invertText, fontSize: 11, cursor: status === 'loading' ? 'not-allowed' : 'pointer' }}
         >
           {status === 'loading' ? 'LOGGING' : 'LOG ATTENDANCE'}
         </button>
