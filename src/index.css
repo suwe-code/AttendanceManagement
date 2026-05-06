@@ -18,7 +18,6 @@ html, body, #root {
   letter-spacing: -0.02em;
   color: #ffffff;
   -webkit-font-smoothing: antialiased;
-  overflow: hidden;
 }
 
 input, textarea, button, select {

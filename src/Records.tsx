@@ -32,6 +32,10 @@ function calcTodayHours(records: AttendanceRecord[]): number {
     }
   }
 
+  if (loginTime !== null) {
+    total += Date.now() - loginTime
+  }
+
   return total / (1000 * 60 * 60)
 }
 
@@ -66,12 +70,14 @@ const eventColors: Record<string, string> = {
   alert: T.negative,
 }
 
-export default function Records() {
+export default function Records({ onOpenProfile }: { onOpenProfile: () => void }) {
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [preview, setPreview] = useState<string | null>(null)
 
   useEffect(() => {
+    const tick = setInterval(() => setRecords(r => [...r]), 60000)
+  
     supabase.auth.getUser().then(({ data: { user } }) => {
       const userId = user?.email?.replace('@app.com', '') ?? ''
       supabase.from('attendance_log').select('*')
@@ -79,6 +85,8 @@ export default function Records() {
         .order('captured_at', { ascending: false })
         .then(({ data }) => { setRecords(data ?? []) ; setLoading(false) })
     })
+  
+    return () => clearInterval(tick)
   }, [])
 
   const todayHours = calcTodayHours(records)
@@ -98,10 +106,10 @@ export default function Records() {
         <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.divider}` }}>
           <img src="/logo.png" alt="SPEC-OPS" style={{ height: 20 }} />
           <button
-            onClick={() => supabase.auth.signOut()}
-            style={{ background: 'transparent', border: `1px solid ${T.border}`, padding: '5px 12px', color: T.text3, fontFamily: T.fontSans, fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: 'pointer' }}
+            onClick={onOpenProfile}
+            style={{ background: 'transparent', border: `1px solid ${T.border}`, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 4 }}
           >
-            LOGOUT
+            <img src="/user-icon.webp" alt="Profile" style={{ width: 18, height: 18, opacity: 0.6, filter: 'invert(1)' }} />
           </button>
         </div>
 

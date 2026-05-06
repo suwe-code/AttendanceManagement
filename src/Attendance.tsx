@@ -73,7 +73,8 @@ export default function Attendance() {
 
     const { blob } = await compress(canvas, 20480)
     const { data: { user } } = await supabase.auth.getUser()
-    const userId = user?.email?.replace('@app.com', '') ?? 'unknown'
+    const { data: person } = await supabase.from('people').select('pan').eq('auth_id', user?.id ?? '').single()
+    const userId = person?.pan ?? 'unknown'
     const fileName = `${userId}_${Date.now()}.jpg`
     const capturedAt = new Date().toISOString()
 
