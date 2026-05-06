@@ -3,12 +3,7 @@ import { supabase } from './supabase'
 import Login from './Login'
 import Attendance from './Attendance'
 import Records from './Records'
-
-const T = {
-  bg: '#0d0d0d', border: '#2a2a2a', divider: '#1f1f1f',
-  text: '#ffffff', textMuted: '#4a4a4a',
-  invertBg: '#ffffff', invertText: '#0a0a0a', surface: '#1a1a1a'
-}
+import { T, caps, mono, bodyText } from './tokens'
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
@@ -26,8 +21,7 @@ export default function App() {
       <div style={{ flex: 1, overflow: 'auto' }}>
         {tab === 'attendance' ? <Attendance /> : <Records />}
       </div>
-      <nav style={{ display: 'flex', gap: 24, padding: '0 16px', borderTop: `1px solid ${T.border}`, background: T.bg, flexShrink: 0 }}>
-        {(['attendance', 'records'] as const).map(t => (
+      <nav style={{ display: 'flex', gap: 24, padding: '0 16px', borderTop: `1px solid ${T.border}`, background: T.bg, flexShrink: 0, justifyContent: 'center' }}>        {(['attendance', 'records'] as const).map(t => (
           <a
             key={t}
             onClick={() => setTab(t)}

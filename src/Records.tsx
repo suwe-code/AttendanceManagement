@@ -1,22 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 
-const T = {
-  bg: '#0d0d0d', surface: '#1a1a1a', elevated: '#222222',
-  border: '#2a2a2a', divider: '#1f1f1f',
-  text: '#ffffff', text2: '#9a9a9a', text3: '#6b6b6b', textMuted: '#4a4a4a',
-  positive: '#22c55e', negative: '#ef4444',
-  invertBg: '#ffffff', invertText: '#0a0a0a'
-}
-
-const caps: React.CSSProperties = {
-  fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500,
-  letterSpacing: '-0.04em', textTransform: 'uppercase', margin: 0
-}
-
-const mono: React.CSSProperties = {
-  fontFamily: "'JetBrains Mono', monospace", letterSpacing: '-0.02em', margin: 0
-}
+import { T, caps, mono, bodyText } from './tokens'
 
 type AttendanceRecord = {
   id: string, user_id: string, image_url: string,

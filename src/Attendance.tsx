@@ -1,22 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabase'
 
-const T = {
-  bg: '#0d0d0d', surface: '#1a1a1a', elevated: '#222222',
-  border: '#2a2a2a', divider: '#1f1f1f',
-  text: '#ffffff', text2: '#9a9a9a', text3: '#6b6b6b', textMuted: '#4a4a4a',
-  positive: '#22c55e', negative: '#ef4444',
-  invertBg: '#ffffff', invertText: '#0a0a0a'
-}
-
-const caps: React.CSSProperties = {
-  fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500,
-  letterSpacing: '-0.04em', textTransform: 'uppercase', margin: 0
-}
-
-const mono: React.CSSProperties = {
-  fontFamily: "'JetBrains Mono', monospace", letterSpacing: '-0.02em', margin: 0
-}
+import { T, caps, mono, bodyText } from './tokens'
 
 export default function Attendance() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -141,8 +126,8 @@ export default function Attendance() {
 
       <div style={{ background: T.bg, borderTop: `1px solid ${T.border}` }}>
 
-        <div style={{ display: 'flex', gap: 24, padding: '12px 16px', borderBottom: `1px solid ${T.divider}` }}>
-          <div>
+      <div style={{ display: 'flex', gap: 24, padding: '12px 16px', borderBottom: `1px solid ${T.divider}`, justifyContent: 'center' }}>
+      <div>
             <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.text2, margin: '0 0 2px' }}>GPS</p>
             <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: coords ? '#22c55e' : '#ef4444', margin: 0 }}>{coords ? 'READY' : 'WAIT'}</p>
           </div>
@@ -156,24 +141,28 @@ export default function Attendance() {
           </div>
         </div>
 
-        <div style={{ padding: '12px 16px', borderBottom: `1px solid ${T.divider}` }}>
-          <p style={{ ...caps, color: T.textMuted, marginBottom: 8 }}>NOTE</p>
-          <textarea
-            value={note}
-            onChange={e => setNote(e.target.value)}
-            placeholder="Optional"
-            rows={2}
-            style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: `1px solid ${T.border}`, color: T.text2, fontSize: 13, letterSpacing: '-0.02em', resize: 'none', padding: '0 0 8px', fontFamily: "'Inter', sans-serif" }}
-          />
+        <div style={{ padding: '12px 16px', borderBottom: `1px solid ${T.divider}`, display: 'flex', justifyContent: 'center' }}>
+          <div style={{ width: '100%', maxWidth: 360 }}>
+            <p style={{ ...caps, color: T.textMuted, marginBottom: 8, fontSize: 10 }}>NOTE</p>
+            <textarea
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              placeholder="Optional"
+              rows={2}
+              style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: `1px solid ${T.border}`, color: T.text2, fontSize: 13, letterSpacing: '-0.02em', resize: 'none', padding: '0 0 8px', fontFamily: T.fontSans }}
+            />
+          </div>
         </div>
 
-        <button
-          onClick={handleLog}
-          disabled={status === 'loading'}
-          style={{ width: '100%', padding: '15px 16px', background: status === 'loading' ? T.surface : T.invertBg, color: status === 'loading' ? T.textMuted : T.invertText, border: 'none', fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: status === 'loading' ? 'not-allowed' : 'pointer' }}
-        >
-          {status === 'loading' ? 'LOGGING' : 'LOG ATTENDANCE'}
-        </button>
+        <div style={{ padding: '16px', display: 'flex', justifyContent: 'center' }}>
+          <button
+            onClick={handleLog}
+            disabled={status === 'loading'}
+            style={{ padding: '12px 32px', background: status === 'loading' ? T.surface : T.invertBg, color: status === 'loading' ? T.textMuted : T.invertText, border: `1px solid ${status === 'loading' ? T.border : T.invertBg}`, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: status === 'loading' ? 'not-allowed' : 'pointer' }}
+          >
+            {status === 'loading' ? 'LOGGING' : 'LOG ATTENDANCE'}
+          </button>
+        </div>
       </div>
     </div>
   )
