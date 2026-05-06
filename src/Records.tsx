@@ -4,7 +4,7 @@ import { T } from './tokens'
 
 type AttendanceRecord = {
   id: string
-  user_id: string
+  pan: string
   image_url: string
   lat: number
   lng: number
@@ -64,7 +64,7 @@ function HoursBar({ hours, max = 9 }: { hours: number, max?: number }) {
 }
 
 const eventColors: Record<string, string> = {
-  login: T.positive,
+  login: T.text2,
   logout: T.text2,
   general: T.text3,
   alert: T.negative,
@@ -77,15 +77,19 @@ export default function Records({ onOpenProfile }: { onOpenProfile: () => void }
 
   useEffect(() => {
     const tick = setInterval(() => setRecords(r => [...r]), 60000)
-  
+
     supabase.auth.getUser().then(({ data: { user } }) => {
-      const userId = user?.email?.replace('@app.com', '') ?? ''
-      supabase.from('attendance_log').select('*')
-        .eq('user_id', userId)
-        .order('captured_at', { ascending: false })
-        .then(({ data }) => { setRecords(data ?? []) ; setLoading(false) })
+      if (!user) return
+      supabase.from('people').select('pan').eq('auth_id', user.id).single()
+        .then(({ data: person }) => {
+          if (!person) return
+          supabase.from('attendance_log').select('*')
+            .eq('pan', person.pan)
+            .order('captured_at', { ascending: false })
+            .then(({ data }) => { setRecords(data ?? []) ; setLoading(false) })
+        })
     })
-  
+
     return () => clearInterval(tick)
   }, [])
 
@@ -112,7 +116,6 @@ export default function Records({ onOpenProfile }: { onOpenProfile: () => void }
             <img src="/user-icon.webp" alt="Profile" style={{ width: 18, height: 18, opacity: 0.6, filter: 'invert(1)' }} />
           </button>
         </div>
-
         <HoursBar hours={todayHours} />
       </div>
 
@@ -138,7 +141,7 @@ export default function Records({ onOpenProfile }: { onOpenProfile: () => void }
             />
             <div style={{ flex: 1, padding: '9px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 3, minWidth: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <p style={{ fontFamily: T.fontSans, fontSize: 13, fontWeight: 500, color: T.text, letterSpacing: '-0.02em', margin: 0 }}>{r.user_id}</p>
+                <p style={{ fontFamily: T.fontSans, fontSize: 13, fontWeight: 500, color: T.text, letterSpacing: '-0.02em', margin: 0 }}>{r.pan}</p>
                 <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: eventColors[r.event_type] ?? T.text2, margin: 0 }}>
                   {r.event_type}
                 </p>

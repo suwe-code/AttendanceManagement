@@ -15,15 +15,31 @@ export default function Attendance() {
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
   const [time, setTime] = useState(new Date())
   const [selectedEvent, setSelectedEvent] = useState<EventType>('login')
+  const [userPan, setUserPan] = useState<string | null>(null)
 
   useEffect(() => {
     startCamera(facingMode)
-    navigator.geolocation.watchPosition(
+
+    const watchId = navigator.geolocation.watchPosition(
       pos => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => {}
     )
+
     const tick = setInterval(() => setTime(new Date()), 1000)
-    return () => clearInterval(tick)
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supabase.from('people').select('pan').eq('auth_id', user.id).single()
+        .then(({ data }) => { if (data) setUserPan(data.pan) })
+    })
+
+    return () => {
+      clearInterval(tick)
+      navigator.geolocation.clearWatch(watchId)
+      if (videoRef.current?.srcObject) {
+        (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop())
+      }
+    }
   }, [])
 
   function startCamera(facing: 'environment' | 'user') {
@@ -62,6 +78,33 @@ export default function Attendance() {
 
   async function handleLog() {
     if (!coords) { setMessage('Waiting for GPS') ; return }
+    if (!userPan) { setMessage('User not loaded') ; return }
+    if (!userPan) { setMessage('User not loaded') ; return }
+
+    if (selectedEvent === 'login' || selectedEvent === 'logout') {
+      const { data: last } = await supabase
+        .from('attendance_log')
+        .select('event_type')
+        .eq('pan', userPan)
+        .in('event_type', ['login', 'logout'])
+        .order('captured_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (selectedEvent === 'login' && last?.event_type === 'login') {
+        setStatus('error')
+        setMessage('Already logged in . please logout first .')
+        setTimeout(() => { setStatus('idle') ; setMessage('') }, 3000)
+        return
+      }
+
+      if (selectedEvent === 'logout' && last?.event_type !== 'login') {
+        setStatus('error')
+        setMessage('No active login found . please login first .')
+        setTimeout(() => { setStatus('idle') ; setMessage('') }, 3000)
+        return
+      }
+    }
     const video = videoRef.current
     const canvas = canvasRef.current
     if (!video || !canvas) return
@@ -72,15 +115,12 @@ export default function Attendance() {
     canvas.getContext('2d')?.drawImage(video, 0, 0)
 
     const { blob } = await compress(canvas, 20480)
-    const { data: { user } } = await supabase.auth.getUser()
-    const { data: person } = await supabase.from('people').select('pan').eq('auth_id', user?.id ?? '').single()
-    const userId = person?.pan ?? 'unknown'
-    const fileName = `${userId}_${Date.now()}.jpg`
+    const fileName = `${userPan}_${Date.now()}.jpg`
     const capturedAt = new Date().toISOString()
 
     const { error: uploadError } = await supabase.storage
       .from('photos').upload(fileName, blob, { contentType: 'image/jpeg' })
-    if (uploadError) { setStatus('error') ; setMessage('Upload failed') ; return }
+    if (uploadError) { setStatus('error') ; setMessage('Upload failed: ' + uploadError.message) ; return }
 
     const { data: urlData } = supabase.storage.from('photos').getPublicUrl(fileName)
 
@@ -91,43 +131,33 @@ export default function Attendance() {
     }
 
     if (selectedEvent === 'logout') {
-      const { data: openLogin } = await supabase
+      const { data: lastLogin } = await supabase
         .from('attendance_log')
         .select('session_id')
-        .eq('user_id', userId)
+        .eq('pan', userPan)
         .eq('event_type', 'login')
-        .is('session_id', null)
         .order('captured_at', { ascending: false })
         .limit(1)
         .maybeSingle()
-
-      if (!openLogin) {
-        const { data: lastLogin } = await supabase
-          .from('attendance_log')
-          .select('session_id')
-          .eq('user_id', userId)
-          .eq('event_type', 'login')
-          .order('captured_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-        sessionId = lastLogin?.session_id ?? null
-      } else {
-        sessionId = openLogin.session_id
-      }
+      sessionId = lastLogin?.session_id ?? null
     }
 
     const { error: insertError } = await supabase.from('attendance_log').insert({
-      user_id: userId,
-      image_url: urlData.publicUrl,
-      lat: coords.lat,
-      lng: coords.lng,
-      captured_at: capturedAt,
-      note: note.trim() || null,
-      event_type: selectedEvent,
+      pan: userPan ,
+      image_url: urlData.publicUrl ,
+      lat: coords.lat ,
+      lng: coords.lng ,
+      captured_at: capturedAt ,
+      note: note.trim() || null ,
+      event_type: selectedEvent ,
       session_id: sessionId
     })
 
-    if (insertError) { setStatus('error') ; setMessage('Save failed') ; return }
+    if (insertError) {
+      setStatus('error')
+      setMessage('Save failed: ' + insertError.message)
+      return
+    }
 
     setStatus('success')
     setMessage(`${selectedEvent.toUpperCase()} logged`)
@@ -135,11 +165,11 @@ export default function Attendance() {
     setTimeout(() => { setStatus('idle') ; setMessage('') }, 3000)
   }
 
-  const events: { type: EventType, label: string, desc: string }[] = [
-    { type: 'login',   label: 'LOGIN',   desc: 'Start of day' },
-    { type: 'logout',  label: 'LOGOUT',  desc: 'End of shift' },
-    { type: 'general', label: 'GENERAL', desc: 'Field update' },
-    { type: 'alert',   label: 'ALERT',   desc: 'Urgent flag' },
+  const events: { type: EventType, label: string }[] = [
+    { type: 'login',   label: 'LOGIN' },
+    { type: 'logout',  label: 'LOGOUT' },
+    { type: 'general', label: 'GENERAL' },
+    { type: 'alert',   label: 'ALERT' },
   ]
 
   return (
@@ -193,19 +223,7 @@ export default function Attendance() {
 
         <div style={{ display: 'flex', gap: 6, padding: '12px 16px', borderBottom: `1px solid ${T.divider}`, justifyContent: 'center' }}>
           {events.map(e => (
-            <button
-              key={e.type}
-              onClick={() => setSelectedEvent(e.type)}
-              style={{
-                padding: '6px 10px',
-                background: selectedEvent === e.type ? T.invertBg : 'transparent',
-                color: selectedEvent === e.type ? T.invertText : T.text2,
-                border: `1px solid ${selectedEvent === e.type ? T.invertBg : T.border}`,
-                fontFamily: T.fontSans, fontSize: 10, fontWeight: 500,
-                letterSpacing: '-0.04em', textTransform: 'uppercase' as const,
-                cursor: 'pointer'
-              }}
-            >
+            <button key={e.type} onClick={() => setSelectedEvent(e.type)} style={{ padding: '6px 10px', background: selectedEvent === e.type ? T.invertBg : 'transparent', color: selectedEvent === e.type ? T.invertText : T.text2, border: `1px solid ${selectedEvent === e.type ? T.invertBg : T.border}`, fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: 'pointer' }}>
               {e.label}
             </button>
           ))}
@@ -214,23 +232,13 @@ export default function Attendance() {
         <div style={{ padding: '12px 16px', borderBottom: `1px solid ${T.divider}`, display: 'flex', justifyContent: 'center' }}>
           <div style={{ width: '100%', maxWidth: 360 }}>
             <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.textMuted, margin: '0 0 8px' }}>NOTE</p>
-            <textarea
-              value={note}
-              onChange={e => setNote(e.target.value)}
-              placeholder="Optional"
-              rows={2}
-              style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: `1px solid ${T.border}`, color: T.text2, fontSize: 13, letterSpacing: '-0.02em', resize: 'none', padding: '0 0 8px', fontFamily: T.fontSans, outline: 'none' }}
-            />
+            <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Optional" rows={2} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: `1px solid ${T.border}`, color: T.text2, fontSize: 13, letterSpacing: '-0.02em', resize: 'none', padding: '0 0 8px', fontFamily: T.fontSans, outline: 'none' }} />
           </div>
         </div>
 
         <div style={{ padding: '16px', display: 'flex', justifyContent: 'center' }}>
-          <button
-            onClick={handleLog}
-            disabled={status === 'loading'}
-            style={{ padding: '10px 32px', background: status === 'loading' ? T.surface : T.invertBg, color: status === 'loading' ? T.textMuted : T.invertText, border: `1px solid ${status === 'loading' ? T.border : T.invertBg}`, fontFamily: T.fontSans, fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: status === 'loading' ? 'not-allowed' : 'pointer' }}
-          >
-            {status === 'loading' ? 'LOGGING' : `${selectedEvent.toUpperCase()}`}
+          <button onClick={handleLog} disabled={status === 'loading' || !userPan} style={{ padding: '10px 32px', background: status === 'loading' ? T.surface : T.invertBg, color: status === 'loading' ? T.textMuted : T.invertText, border: `1px solid ${status === 'loading' ? T.border : T.invertBg}`, fontFamily: T.fontSans, fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: status === 'loading' ? 'not-allowed' : 'pointer' }}>
+            {status === 'loading' ? 'LOGGING' : selectedEvent.toUpperCase()}
           </button>
         </div>
 

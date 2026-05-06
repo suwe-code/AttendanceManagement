@@ -4,7 +4,7 @@ import { T } from './tokens'
 
 type Screen = 'signin' | 'signup'
 
-const LANGUAGES = ['English','Hindi','Tamil','Telugu','Kannada','Malayalam','Marathi','Bengali','Gujarati','Punjabi']
+const LANGUAGES = ['English','Hindi','Tamil','Telugu','Kannada','French','German','Chinese','Japanese','Others']
 const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/
 
 export default function Login() {
@@ -30,38 +30,20 @@ function SignIn({ onSwitch }: { onSwitch: () => void }) {
     <div style={{ minHeight: '100dvh', background: T.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ width: '100%', maxWidth: 360 }}>
         <img src="/logo.png" alt="SPEC-OPS" style={{ height: 24, display: 'block', marginBottom: 40 }} />
-
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
             <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.text2, margin: '0 0 4px' }}>Email</p>
-            <input
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              style={{ width: '100%', background: 'transparent', border: `1px solid ${T.border}`, color: T.text, padding: '8px 10px', fontSize: 13, fontFamily: T.fontSans, letterSpacing: '-0.02em', outline: 'none', boxSizing: 'border-box' as const }}
-            />
+            <input value={email} onChange={e => setEmail(e.target.value)} style={{ width: '100%', background: 'transparent', border: `1px solid ${T.border}`, color: T.text, padding: '8px 10px', fontSize: 13, fontFamily: T.fontSans, letterSpacing: '-0.02em', outline: 'none', boxSizing: 'border-box' as const }} />
           </div>
           <div>
             <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.text2, margin: '0 0 4px' }}>Password</p>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSignIn()}
-              style={{ width: '100%', background: 'transparent', border: `1px solid ${T.border}`, color: T.text, padding: '8px 10px', fontSize: 13, fontFamily: T.fontSans, letterSpacing: '-0.02em', outline: 'none', boxSizing: 'border-box' as const }}
-            />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSignIn()} style={{ width: '100%', background: 'transparent', border: `1px solid ${T.border}`, color: T.text, padding: '8px 10px', fontSize: 13, fontFamily: T.fontSans, letterSpacing: '-0.02em', outline: 'none', boxSizing: 'border-box' as const }} />
           </div>
           {error && <p style={{ fontFamily: T.fontSans, fontSize: 11, color: T.negative, margin: 0, letterSpacing: '-0.02em' }}>{error}</p>}
-          <button
-            onClick={handleSignIn}
-            disabled={loading}
-            style={{ width: '100%', padding: '12px', background: loading ? T.surface : T.invertBg, color: loading ? T.textMuted : T.invertText, border: 'none', fontFamily: T.fontSans, fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: loading ? 'not-allowed' : 'pointer' }}
-          >
+          <button onClick={handleSignIn} disabled={loading} style={{ width: '100%', padding: '12px', background: loading ? T.surface : T.invertBg, color: loading ? T.textMuted : T.invertText, border: 'none', fontFamily: T.fontSans, fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: loading ? 'not-allowed' : 'pointer' }}>
             {loading ? 'Signing in' : 'Sign In'}
           </button>
-          <button
-            onClick={onSwitch}
-            style={{ background: 'transparent', border: 'none', color: T.text3, fontFamily: T.fontSans, fontSize: 11, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: 'pointer', padding: '4px 0', textAlign: 'left' as const }}
-          >
+          <button onClick={onSwitch} style={{ background: 'transparent', border: 'none', color: T.text3, fontFamily: T.fontSans, fontSize: 11, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: 'pointer', padding: '4px 0', textAlign: 'left' as const }}>
             Create account →
           </button>
         </div>
@@ -82,11 +64,10 @@ function SignUp({ onSwitch }: { onSwitch: () => void }) {
   const [accNum, setAccNum] = useState('')
   const [ifsc, setIfsc] = useState('')
   const [upiId, setUpiId] = useState('')
+  const [introVideoUrl, setIntroVideoUrl] = useState('')
   const [languages, setLanguages] = useState<string[]>([])
   const [address, setAddress] = useState('')
   const [city, setCity] = useState('')
-  const [introVideo, setIntroVideo] = useState<File | null>(null)
-  const [_videoUploading, setVideoUploading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [globalError, setGlobalError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -114,32 +95,22 @@ function SignUp({ onSwitch }: { onSwitch: () => void }) {
     const authId = authData.user?.id
     if (!authId) { setGlobalError('Signup failed. Try again.') ; setLoading(false) ; return }
 
-    let intro_video_url: string | null = null
-    if (introVideo && introVideo.size > 50 * 1024 * 1024) {
-      setGlobalError('Video is too large . please record a shorter clip ( under 50MB )')
-      setLoading(false) ; return
-    }
-    if (introVideo) {
-      setVideoUploading(true)
-      const ext = introVideo.name.split('.').pop()
-      const fileName = `${pan.toUpperCase()}_${Date.now()}.${ext}`
-      const { error: vidError } = await supabase.storage
-        .from('intro-videos').upload(fileName, introVideo, { contentType: introVideo.type })
-      if (!vidError) {
-        const { data: vidUrl } = supabase.storage.from('intro-videos').getPublicUrl(fileName)
-        intro_video_url = vidUrl.publicUrl
-      }
-      setVideoUploading(false)
-    }
-
     const { error: insertError } = await supabase.from('people').insert({
-      pan: pan.toUpperCase(), auth_id: authId, name, email,
-      wa_num: waNum || null, discord: discord || null,
-      dob: dob || null, benef_name: benefName || null,
-      acc_num: accNum || null, ifsc: ifsc || null,
-      upi_id: upiId || null, languages,
-      permanent_address: address || null, residing_city: city || null,
-      intro_video_url
+      pan: pan.toUpperCase() ,
+      auth_id: authId ,
+      name ,
+      email ,
+      wa_num: waNum || null ,
+      discord: discord || null ,
+      dob: dob || null ,
+      benef_name: benefName || null ,
+      acc_num: accNum || null ,
+      ifsc: ifsc || null ,
+      upi_id: upiId || null ,
+      intro_video_url: introVideoUrl || null ,
+      languages ,
+      permanent_address: address || null ,
+      residing_city: city || null
     })
 
     if (insertError) {
@@ -173,6 +144,7 @@ function SignUp({ onSwitch }: { onSwitch: () => void }) {
   return (
     <div style={{ minHeight: '100dvh', background: T.bg, overflowY: 'auto' }}>
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 24px 64px' }}>
+        <button onClick={onSwitch} style={{ background: 'transparent', border: 'none', color: T.text3, fontFamily: T.fontSans, fontSize: 11, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: 'pointer', padding: '0 0 24px', display: 'block' }}>← Back</button>
         <img src="/logo.png" alt="SPEC-OPS" style={{ height: 24, display: 'block', marginBottom: 32 }} />
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -239,15 +211,8 @@ function SignUp({ onSwitch }: { onSwitch: () => void }) {
           </div>
 
           <div>
-            {lbl('Intro Video')}
-            <p style={{ fontFamily: T.fontSans, fontSize: 11, color: T.text3, margin: '0 0 8px', letterSpacing: '-0.02em' }}>Short video introducing yourself ( mp4 , max 50mb )</p>
-            <input
-              type="file"
-              accept="video/*"
-              onChange={e => setIntroVideo(e.target.files?.[0] ?? null)}
-              style={{ width: '100%', background: 'transparent', border: `1px solid ${T.border}`, color: T.text, padding: '8px 10px', fontSize: 12, fontFamily: T.fontSans, letterSpacing: '-0.02em', cursor: 'pointer', boxSizing: 'border-box' as const }}
-            />
-            {introVideo && <p style={{ fontFamily: T.fontMono, fontSize: 10, color: T.positive, margin: '4px 0 0' }}>{introVideo.name}</p>}
+            {lbl('Intro Video URL')}
+            <input value={introVideoUrl} onChange={e => setIntroVideoUrl(e.target.value)} placeholder="https://..." style={inputStyle()} />
           </div>
 
           <div>
