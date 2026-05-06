@@ -9,7 +9,7 @@ type Person = {
   wa_num: string | null , discord: string | null , dob: string | null
   benef_name: string | null , acc_num: string | null , ifsc: string | null
   upi_id: string | null , languages: string[] , permanent_address: string | null
-  residing_city: string | null , role: string
+  residing_city: string | null , role: string , intro_video_url: string | null
 }
 
 type LogRecord = {
@@ -144,7 +144,7 @@ function EditProfile({ person, onSaved }: { person: Person, onSaved: (p: Person)
       intro_video_url : null,
       updated_at: new Date().toISOString()
     }
-    let intro_video_url = person.intro_video_url ?? null
+    let intro_video_url: string | null = person.intro_video_url ?? null
 
     if (introVideo) {
       if (introVideo.size > 50 * 1024 * 1024) {
@@ -202,7 +202,7 @@ function EditProfile({ person, onSaved }: { person: Person, onSaved: (p: Person)
       </div>
 
       <div>
-        <span style={lbl('Intro Video')} />
+      <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.text2, margin: '0 0 4px' }}>Intro Video</p>
         {person.intro_video_url && (
           <p style={{ fontFamily: T.fontMono, fontSize: 10, color: T.positive, margin: '0 0 8px' }}>
             ✓ Video uploaded · <a href={person.intro_video_url} target="_blank" rel="noopener noreferrer" style={{ color: T.text3 }}>view ↗</a>
