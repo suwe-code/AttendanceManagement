@@ -1,11 +1,69 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
-
-import { T, caps, mono, bodyText } from './tokens'
+import { T } from './tokens'
 
 type AttendanceRecord = {
-  id: string, user_id: string, image_url: string,
-  lat: number, lng: number, captured_at: string
+  id: string
+  user_id: string
+  image_url: string
+  lat: number
+  lng: number
+  captured_at: string
+  event_type: string
+  note: string | null
+  session_id: string | null
+}
+
+function calcTodayHours(records: AttendanceRecord[]): number {
+  const today = new Date().toDateString()
+  const todayRecords = records
+    .filter(r => new Date(r.captured_at).toDateString() === today)
+    .sort((a, b) => new Date(a.captured_at).getTime() - new Date(b.captured_at).getTime())
+
+  let total = 0
+  let loginTime: number | null = null
+
+  for (const r of todayRecords) {
+    if (r.event_type === 'login') {
+      loginTime = new Date(r.captured_at).getTime()
+    } else if (r.event_type === 'logout' && loginTime !== null) {
+      total += new Date(r.captured_at).getTime() - loginTime
+      loginTime = null
+    }
+  }
+
+  return total / (1000 * 60 * 60)
+}
+
+function HoursBar({ hours, max = 9 }: { hours: number, max?: number }) {
+  const pct = Math.min(hours / max, 1)
+  const h = Math.floor(hours)
+  const m = Math.round((hours - h) * 60)
+
+  return (
+    <div style={{ padding: '14px 16px', borderBottom: `1px solid ${T.divider}` }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+        <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.text2, margin: 0 }}>TODAY'S HOURS</p>
+        <p style={{ fontFamily: T.fontMono, fontSize: 20, fontWeight: 500, letterSpacing: '-0.02em', color: T.text, margin: 0 }}>
+          {h}h {m}m
+        </p>
+      </div>
+      <div style={{ height: 2, background: T.border, width: '100%' }}>
+        <div style={{ height: 2, background: T.text, width: `${pct * 100}%`, transition: 'width 0.3s' }} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+        <p style={{ fontFamily: T.fontMono, fontSize: 10, color: T.textMuted, margin: 0 }}>0h</p>
+        <p style={{ fontFamily: T.fontMono, fontSize: 10, color: T.textMuted, margin: 0 }}>{max}h</p>
+      </div>
+    </div>
+  )
+}
+
+const eventColors: Record<string, string> = {
+  login: T.positive,
+  logout: T.text2,
+  general: T.text3,
+  alert: T.negative,
 }
 
 export default function Records() {
@@ -23,9 +81,7 @@ export default function Records() {
     })
   }, [])
 
-  const todayCount = records.filter(r =>
-    new Date(r.captured_at).toDateString() === new Date().toDateString()
-  ).length
+  const todayHours = calcTodayHours(records)
 
   function formatDate(iso: string) {
     return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()
@@ -43,42 +99,25 @@ export default function Records() {
           <img src="/logo.png" alt="SPEC-OPS" style={{ height: 20 }} />
           <button
             onClick={() => supabase.auth.signOut()}
-            style={{ background: 'transparent', border: `1px solid ${T.border}`, padding: '5px 12px', color: T.text3, ...caps, cursor: 'pointer' }}
+            style={{ background: 'transparent', border: `1px solid ${T.border}`, padding: '5px 12px', color: T.text3, fontFamily: T.fontSans, fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: 'pointer' }}
           >
             LOGOUT
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${T.divider}` }}>
-          <div style={{ padding: '12px 16px', borderRight: `1px solid ${T.divider}` }}>
-            <p style={{ ...caps, color: T.textMuted, marginBottom: 6 }}>TOTAL</p>
-            <p style={{ ...mono, fontSize: 20, fontWeight: 500, color: T.text }}>
-              {loading ? '—' : records.length.toLocaleString()}
-            </p>
-          </div>
-          <div style={{ padding: '12px 16px', borderRight: `1px solid ${T.divider}` }}>
-            <p style={{ ...caps, color: T.textMuted, marginBottom: 6 }}>TODAY</p>
-            <p style={{ ...mono, fontSize: 20, fontWeight: 500, color: T.text }}>
-              {loading ? '—' : todayCount.toLocaleString()}
-            </p>
-          </div>
-          <div style={{ padding: '12px 16px' }}>
-            <p style={{ ...caps, color: T.textMuted, marginBottom: 6 }}>STATUS</p>
-            <p style={{ ...mono, fontSize: 13, fontWeight: 500, color: T.positive }}>LIVE</p>
-          </div>
-        </div>
+        <HoursBar hours={todayHours} />
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {loading && (
           <div style={{ padding: 32, textAlign: 'center' }}>
-            <p style={{ ...caps, color: T.textMuted }}>LOADING</p>
+            <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.textMuted }}>LOADING</p>
           </div>
         )}
 
         {!loading && records.length === 0 && (
           <div style={{ padding: 48, textAlign: 'center' }}>
-            <p style={{ ...caps, color: T.border }}>NO RECORDS</p>
+            <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.border }}>NO RECORDS</p>
           </div>
         )}
 
@@ -91,23 +130,28 @@ export default function Records() {
             />
             <div style={{ flex: 1, padding: '9px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 3, minWidth: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 500, color: T.text, letterSpacing: '-0.02em', margin: 0 }}>{r.user_id}</p>
-                <p style={{ ...caps, color: T.positive }}>LOGGED</p>
+                <p style={{ fontFamily: T.fontSans, fontSize: 13, fontWeight: 500, color: T.text, letterSpacing: '-0.02em', margin: 0 }}>{r.user_id}</p>
+                <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: eventColors[r.event_type] ?? T.text2, margin: 0 }}>
+                  {r.event_type}
+                </p>
               </div>
               <a
                 href={`https://www.google.com/maps?q=${r.lat},${r.lng}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ ...mono, fontSize: 11, color: T.text3, textDecoration: 'none' }}
+                style={{ fontFamily: T.fontMono, fontSize: 11, color: T.text3, textDecoration: 'none', letterSpacing: '-0.02em' }}
               >
                 {r.lat.toFixed(4)},{r.lng.toFixed(4)} ↗
               </a>
-              <p style={{ ...mono, fontSize: 11, color: T.textMuted }}>
+              <p style={{ fontFamily: T.fontMono, fontSize: 11, color: T.textMuted, margin: 0, letterSpacing: '-0.02em' }}>
                 {formatDate(r.captured_at)} · {formatTime(r.captured_at)}
               </p>
+              {r.note && (
+                <p style={{ fontFamily: T.fontSans, fontSize: 11, color: T.text2, margin: 0, letterSpacing: '-0.02em' }}>{r.note}</p>
+              )}
             </div>
             <div style={{ padding: '9px 12px', display: 'flex', alignItems: 'center', borderLeft: `1px solid ${T.divider}`, flexShrink: 0, minWidth: 48, justifyContent: 'flex-end' }}>
-              <p style={{ ...mono, fontSize: 11, color: T.textMuted }}>#{records.length - i}</p>
+              <p style={{ fontFamily: T.fontMono, fontSize: 11, color: T.textMuted, margin: 0 }}>#{records.length - i}</p>
             </div>
           </div>
         ))}
@@ -119,7 +163,7 @@ export default function Records() {
           style={{ position: 'fixed', inset: 0, background: 'rgba(13,13,13,0.97)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 99, padding: 16 }}
         >
           <img src={preview} style={{ maxWidth: '100%', maxHeight: '85dvh', display: 'block' }} />
-          <p style={{ ...caps, color: T.textMuted, marginTop: 16 }}>TAP TO CLOSE</p>
+          <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.textMuted, marginTop: 16 }}>TAP TO CLOSE</p>
         </div>
       )}
     </div>
