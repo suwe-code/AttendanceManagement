@@ -74,15 +74,17 @@ export default function Records({ onOpenProfile }: { onOpenProfile: () => void }
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [preview, setPreview] = useState<string | null>(null)
+  const [userName, setUserName] = useState('')
 
   useEffect(() => {
     const tick = setInterval(() => setRecords(r => [...r]), 60000)
 
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
-      supabase.from('people').select('pan').eq('auth_id', user.id).single()
+      supabase.from('people').select('pan, name').eq('auth_id', user.id).single()
         .then(({ data: person }) => {
           if (!person) return
+          setUserName(person.name)
           supabase.from('attendance_log').select('*')
             .eq('pan', person.pan)
             .order('captured_at', { ascending: false })
@@ -141,7 +143,7 @@ export default function Records({ onOpenProfile }: { onOpenProfile: () => void }
             />
             <div style={{ flex: 1, padding: '9px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 3, minWidth: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <p style={{ fontFamily: T.fontSans, fontSize: 13, fontWeight: 500, color: T.text, letterSpacing: '-0.02em', margin: 0 }}>{r.pan}</p>
+              <p style={{ fontFamily: T.fontSans, fontSize: 13, fontWeight: 500, color: T.text, letterSpacing: '-0.02em', margin: 0 }}>{userName}</p>
                 <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: eventColors[r.event_type] ?? T.text2, margin: 0 }}>
                   {r.event_type}
                 </p>
