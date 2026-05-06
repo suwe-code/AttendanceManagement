@@ -141,19 +141,19 @@ export default function Attendance() {
 
       <div style={{ background: T.bg, borderTop: `1px solid ${T.border}` }}>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${T.divider}` }}>
-          {[
-            { label: 'GPS', value: coords ? 'READY' : 'WAIT', semantic: true, ok: !!coords },
-            { label: 'CAMERA', value: camReady ? 'READY' : 'WAIT', semantic: true, ok: camReady },
-            { label: 'TIME', value: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }), semantic: false, ok: true }
-          ].map((item, i) => (
-            <div key={item.label} style={{ padding: '10px 16px', borderRight: i < 2 ? `1px solid ${T.divider}` : 'none' }}>
-              <p style={{ ...caps, color: T.textMuted, marginBottom: 4 }}>{item.label}</p>
-              <p style={{ ...mono, fontSize: 13, fontWeight: 500, color: item.semantic ? (item.ok ? T.positive : T.negative) : T.text }}>
-                {item.value}
-              </p>
-            </div>
-          ))}
+        <div style={{ display: 'flex', gap: 24, padding: '12px 16px', borderBottom: `1px solid ${T.divider}` }}>
+          <div>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.text2, margin: '0 0 2px' }}>GPS</p>
+            <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: coords ? '#22c55e' : '#ef4444', margin: 0 }}>{coords ? 'READY' : 'WAIT'}</p>
+          </div>
+          <div>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.text2, margin: '0 0 2px' }}>CAMERA</p>
+            <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: camReady ? '#22c55e' : '#ef4444', margin: 0 }}>{camReady ? 'READY' : 'WAIT'}</p>
+          </div>
+          <div>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.text2, margin: '0 0 2px' }}>TIME</p>
+            <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 500, letterSpacing: '-0.02em', color: T.text, margin: 0 }}>{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
+          </div>
         </div>
 
         <div style={{ padding: '12px 16px', borderBottom: `1px solid ${T.divider}` }}>

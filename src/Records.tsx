@@ -29,9 +29,13 @@ export default function Records() {
   const [preview, setPreview] = useState<string | null>(null)
 
   useEffect(() => {
-    supabase.from('attendance_log').select('*')
-      .order('captured_at', { ascending: false })
-      .then(({ data }) => { setRecords(data ?? []) ; setLoading(false) })
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      const userId = user?.email?.replace('@app.com', '') ?? ''
+      supabase.from('attendance_log').select('*')
+        .eq('user_id', userId)
+        .order('captured_at', { ascending: false })
+        .then(({ data }) => { setRecords(data ?? []) ; setLoading(false) })
+    })
   }, [])
 
   const todayCount = records.filter(r =>
