@@ -144,7 +144,7 @@ function EditProfile({ person, onSaved }: { person: Person, onSaved: (p: Person)
       intro_video_url : null,
       updated_at: new Date().toISOString()
     }
-    let intro_video_url: string | null = person.intro_video_url ?? null
+    let _intro_video_url: string | null = person.intro_video_url ?? null
 
     if (introVideo) {
       if (introVideo.size > 50 * 1024 * 1024) {
@@ -158,7 +158,7 @@ function EditProfile({ person, onSaved }: { person: Person, onSaved: (p: Person)
         .from('intro-videos').upload(fileName, introVideo, { contentType: introVideo.type })
       if (!vidError) {
         const { data: vidUrl } = supabase.storage.from('intro-videos').getPublicUrl(fileName)
-        intro_video_url = vidUrl.publicUrl
+        _intro_video_url = vidUrl.publicUrl
       }
       setVideoUploading(false)
     }
