@@ -135,16 +135,7 @@ function EditProfile({ person, onSaved }: { person: Person, onSaved: (p: Person)
 
   async function handleSave() {
     setLoading(true)
-    const updates = {
-      wa_num: waNum || null , discord: discord || null ,
-      dob: dob || null , benef_name: benefName || null ,
-      acc_num: accNum || null , ifsc: ifsc || null ,
-      upi_id: upiId || null , languages ,
-      permanent_address: address || null , residing_city: city || null ,
-      intro_video_url : null,
-      updated_at: new Date().toISOString()
-    }
-    let _intro_video_url: string | null = person.intro_video_url ?? null
+    let intro_video_url: string | null = person.intro_video_url ?? null
 
     if (introVideo) {
       if (introVideo.size > 50 * 1024 * 1024) {
@@ -158,9 +149,19 @@ function EditProfile({ person, onSaved }: { person: Person, onSaved: (p: Person)
         .from('intro-videos').upload(fileName, introVideo, { contentType: introVideo.type })
       if (!vidError) {
         const { data: vidUrl } = supabase.storage.from('intro-videos').getPublicUrl(fileName)
-        _intro_video_url = vidUrl.publicUrl
+        intro_video_url = vidUrl.publicUrl
       }
       setVideoUploading(false)
+    }
+
+    const updates = {
+      wa_num: waNum || null , discord: discord || null ,
+      dob: dob || null , benef_name: benefName || null ,
+      acc_num: accNum || null , ifsc: ifsc || null ,
+      upi_id: upiId || null , languages ,
+      permanent_address: address || null , residing_city: city || null ,
+      intro_video_url,
+      updated_at: new Date().toISOString()
     }
 
     await supabase.from('people').update(updates).eq('pan', person.pan)
