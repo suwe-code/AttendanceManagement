@@ -33,16 +33,22 @@ function SignIn({ onSwitch }: { onSwitch: () => void }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
             <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.text2, margin: '0 0 4px' }}>Email</p>
-            <input value={email} onChange={e => setEmail(e.target.value)} style={{ width: '100%', background: 'transparent', border: `1px solid ${T.border}`, color: T.text, padding: '8px 10px', fontSize: 13, fontFamily: T.fontSans, letterSpacing: '-0.02em', outline: 'none', boxSizing: 'border-box' as const }} />
+            <input value={email} onChange={e => setEmail(e.target.value)} style={{ width: '90%', background: 'transparent', border: `1px solid ${T.border}`, color: T.text, padding: '8px 10px', fontSize: 13, fontFamily: T.fontSans, letterSpacing: '-0.02em', outline: 'none', boxSizing: 'border-box' as const }} />
           </div>
           <div>
             <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.text2, margin: '0 0 4px' }}>Password</p>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSignIn()} style={{ width: '100%', background: 'transparent', border: `1px solid ${T.border}`, color: T.text, padding: '8px 10px', fontSize: 13, fontFamily: T.fontSans, letterSpacing: '-0.02em', outline: 'none', boxSizing: 'border-box' as const }} />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSignIn()} style={{ width: '90%', background: 'transparent', border: `1px solid ${T.border}`, color: T.text, padding: '8px 10px', fontSize: 13, fontFamily: T.fontSans, letterSpacing: '-0.02em', outline: 'none', boxSizing: 'border-box' as const }} />
           </div>
           {error && <p style={{ fontFamily: T.fontSans, fontSize: 11, color: T.negative, margin: 0, letterSpacing: '-0.02em' }}>{error}</p>}
-          <button onClick={handleSignIn} disabled={loading} style={{ width: '100%', padding: '12px', background: loading ? T.surface : T.invertBg, color: loading ? T.textMuted : T.invertText, border: 'none', fontFamily: T.fontSans, fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: loading ? 'not-allowed' : 'pointer' }}>
-            {loading ? 'Signing in' : 'Sign In'}
-          </button>
+          <div style={{ display: 'flex' }}>
+            <button
+              onClick={handleSignIn}
+              disabled={loading}
+              style={{ padding: '6px 25px', background: 'transparent', color: T.text2, border: `1px solid ${T.border}`, fontFamily: T.fontSans, fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1 }}
+            >
+              {loading ? 'Signing in' : 'Sign In'}
+            </button>
+          </div>
           <button onClick={onSwitch} style={{ background: 'transparent', border: 'none', color: T.text3, fontFamily: T.fontSans, fontSize: 11, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: 'pointer', padding: '4px 0', textAlign: 'left' as const }}>
             Create account →
           </button>
