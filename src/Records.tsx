@@ -24,9 +24,9 @@ function calcTodayHours(records: AttendanceRecord[]): number {
   let loginTime: number | null = null
 
   for (const r of todayRecords) {
-    if (r.event_type === 'login') {
+    if (r.event_type === 'clockin') {
       loginTime = new Date(r.captured_at).getTime()
-    } else if (r.event_type === 'logout' && loginTime !== null) {
+    } else if (r.event_type === 'clockout' && loginTime !== null) {
       total += new Date(r.captured_at).getTime() - loginTime
       loginTime = null
     }
@@ -64,10 +64,11 @@ function HoursBar({ hours, max = 9 }: { hours: number, max?: number }) {
 }
 
 const eventColors: Record<string, string> = {
-  login: T.text2,
-  logout: T.text2,
-  general: T.text3,
-  alert: T.negative,
+  clockin: T.positive,
+  clockout: T.text2,
+  handover: T.text3,
+  pay: T.text3,
+  incident: T.text3,
 }
 
 export default function Records({ onOpenProfile }: { onOpenProfile: () => void }) {

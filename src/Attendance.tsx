@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabase'
 import { T } from './tokens'
 
-type EventType = 'login' | 'logout' | 'general' | 'alert'
+type EventType = 'clocking' | 'handover' | 'pay' | 'incident'
 
 export default function Attendance() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -12,10 +12,13 @@ export default function Attendance() {
   const [message, setMessage] = useState('')
   const [camReady, setCamReady] = useState(false)
   const [note, setNote] = useState('')
+  const [amount, setAmount] = useState('')
+  const [critical, setCritical] = useState(false)
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
   const [time, setTime] = useState(new Date())
-  const [selectedEvent, setSelectedEvent] = useState<EventType>('login')
+  const [selectedEvent, setSelectedEvent] = useState<EventType>('clocking')
   const [userPan, setUserPan] = useState<string | null>(null)
+  const [clockedIn, setClockedIn] = useState(false)
 
   useEffect(() => {
     startCamera(facingMode)
@@ -30,7 +33,21 @@ export default function Attendance() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
       supabase.from('people').select('pan').eq('auth_id', user.id).single()
-        .then(({ data }) => { if (data) setUserPan(data.pan) })
+        .then(({ data }) => {
+          if (!data) return
+          setUserPan(data.pan)
+          supabase.from('attendance_log')
+            .select('amount')
+            .eq('pan', data.pan)
+            .eq('event_type', 'clocking')
+            .order('captured_at', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+            .then(({ data: last }) => {
+              const isIn = last?.amount === 1
+              setClockedIn(isIn)
+            })
+        })
     })
 
     return () => {
@@ -79,32 +96,15 @@ export default function Attendance() {
   async function handleLog() {
     if (!coords) { setMessage('Waiting for GPS') ; return }
     if (!userPan) { setMessage('User not loaded') ; return }
-    if (!userPan) { setMessage('User not loaded') ; return }
 
-    if (selectedEvent === 'login' || selectedEvent === 'logout') {
-      const { data: last } = await supabase
-        .from('attendance_log')
-        .select('event_type')
-        .eq('pan', userPan)
-        .in('event_type', ['login', 'logout'])
-        .order('captured_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      if (selectedEvent === 'login' && last?.event_type === 'login') {
-        setStatus('error')
-        setMessage('Already logged in . please logout first .')
-        setTimeout(() => { setStatus('idle') ; setMessage('') }, 3000)
-        return
-      }
-
-      if (selectedEvent === 'logout' && last?.event_type !== 'login') {
-        setStatus('error')
-        setMessage('No active login found . please login first .')
-        setTimeout(() => { setStatus('idle') ; setMessage('') }, 3000)
-        return
-      }
+    if (selectedEvent === 'clocking' && clockedIn) {
+      setStatus('error') ; setMessage('Already clocked in . clock out first .')
+      setTimeout(() => { setStatus('idle') ; setMessage('') }, 3000) ; return
     }
+    if (selectedEvent === 'clocking' && !clockedIn) {
+      // allow clock in
+    }
+
     const video = videoRef.current
     const canvas = canvasRef.current
     if (!video || !canvas) return
@@ -125,22 +125,26 @@ export default function Attendance() {
     const { data: urlData } = supabase.storage.from('photos').getPublicUrl(fileName)
 
     let sessionId: string | null = null
-
-    if (selectedEvent === 'login') {
-      sessionId = crypto.randomUUID()
-    }
-
-    if (selectedEvent === 'logout') {
+    if (selectedEvent === 'clocking' && !clockedIn) sessionId = crypto.randomUUID()
+    if (selectedEvent === 'clocking' && clockedIn) {
       const { data: lastLogin } = await supabase
         .from('attendance_log')
         .select('session_id')
         .eq('pan', userPan)
-        .eq('event_type', 'login')
+        .eq('event_type', 'clocking')
+        .eq('amount', 1)
         .order('captured_at', { ascending: false })
         .limit(1)
         .maybeSingle()
       sessionId = lastLogin?.session_id ?? null
     }
+
+    const amountVal =
+      selectedEvent === 'clocking' ? (clockedIn ? 0 : 1) :
+      selectedEvent === 'pay' ? (parseFloat(amount) || null) :
+      selectedEvent === 'handover' ? (parseFloat(amount) || null) :
+      selectedEvent === 'incident' ? (critical ? 1 : 0) :
+      null
 
     const { error: insertError } = await supabase.from('attendance_log').insert({
       pan: userPan ,
@@ -150,27 +154,34 @@ export default function Attendance() {
       captured_at: capturedAt ,
       note: note.trim() || null ,
       event_type: selectedEvent ,
-      session_id: sessionId
+      session_id: sessionId ,
+      amount: amountVal
     })
 
     if (insertError) {
-      setStatus('error')
-      setMessage('Save failed: ' + insertError.message)
-      return
+      setStatus('error') ; setMessage('Save failed: ' + insertError.message) ; return
     }
 
+    if (selectedEvent === 'clocking') setClockedIn(v => !v)
+
     setStatus('success')
-    setMessage(`${selectedEvent.toUpperCase()} logged`)
-    setNote('')
+    setMessage(selectedEvent === 'clocking' ? (clockedIn ? 'CLOCKED OUT' : 'CLOCKED IN') : `${selectedEvent.toUpperCase()} logged`)
+    setNote('') ; setAmount('') ; setCritical(false)
     setTimeout(() => { setStatus('idle') ; setMessage('') }, 3000)
   }
 
-  const events: { type: EventType, label: string }[] = [
-    { type: 'login',   label: 'LOGIN' },
-    { type: 'logout',  label: 'LOGOUT' },
-    { type: 'general', label: 'GENERAL' },
-    { type: 'alert',   label: 'ALERT' },
+  const nonClockEvents: { type: EventType, label: string }[] = [
+    { type: 'handover', label: 'HANDOVER' },
+    { type: 'pay',      label: 'PAY' },
+    { type: 'incident', label: 'INCIDENT' },
   ]
+
+  const inputBase: React.CSSProperties = {
+    width: '100%', background: 'transparent', border: 'none',
+    borderBottom: `1px solid ${T.border}`, color: T.text2,
+    fontSize: 13, letterSpacing: '-0.02em', padding: '0 0 8px',
+    fontFamily: T.fontSans, outline: 'none'
+  }
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#000' }}>
@@ -219,26 +230,85 @@ export default function Attendance() {
             <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.text2, margin: '0 0 2px' }}>TIME</p>
             <p style={{ fontFamily: T.fontMono, fontSize: 13, fontWeight: 500, letterSpacing: '-0.02em', color: T.text, margin: 0 }}>{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</p>
           </div>
+          <div>
+            <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.text2, margin: '0 0 2px' }}>STATUS</p>
+            <p style={{ fontFamily: T.fontMono, fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: clockedIn ? T.positive : T.text3, margin: 0 }}>{clockedIn ? 'LIVE' : 'OUT'}</p>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 6, padding: '12px 16px', borderBottom: `1px solid ${T.divider}`, justifyContent: 'center' }}>
-          {events.map(e => (
-            <button key={e.type} onClick={() => setSelectedEvent(e.type)} style={{ padding: '6px 10px', background: selectedEvent === e.type ? T.invertBg : 'transparent', color: selectedEvent === e.type ? T.invertText : T.text2, border: `1px solid ${selectedEvent === e.type ? T.invertBg : T.border}`, fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: 'pointer' }}>
+        <div style={{ display: 'flex', gap: 6, padding: '12px 16px', borderBottom: `1px solid ${T.divider}`, justifyContent: 'center', flexWrap: 'wrap' as const }}>
+          <button
+            onClick={() => setSelectedEvent('clocking')}
+            style={{
+              padding: '6px 10px',
+              background: selectedEvent === 'clocking' ? T.invertBg : 'transparent',
+              color: selectedEvent === 'clocking' ? T.invertText : T.text2,
+              border: `1px solid ${selectedEvent === 'clocking' ? T.invertBg : T.border}`,
+              fontFamily: T.fontSans, fontSize: 10, fontWeight: 500,
+              letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: 'pointer'
+            }}
+          >
+            {clockedIn ? 'CLOCK OUT' : 'CLOCK IN'}
+          </button>
+
+          {nonClockEvents.map(e => (
+            <button key={e.type} onClick={() => setSelectedEvent(e.type)} style={{
+              padding: '6px 10px',
+              background: selectedEvent === e.type ? T.invertBg : 'transparent',
+              color: selectedEvent === e.type ? T.invertText : T.text2,
+              border: `1px solid ${selectedEvent === e.type ? T.invertBg : T.border}`,
+              fontFamily: T.fontSans, fontSize: 10, fontWeight: 500,
+              letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: 'pointer'
+            }}>
               {e.label}
             </button>
           ))}
         </div>
 
         <div style={{ padding: '12px 16px', borderBottom: `1px solid ${T.divider}`, display: 'flex', justifyContent: 'center' }}>
-          <div style={{ width: '100%', maxWidth: 360 }}>
-            <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.textMuted, margin: '0 0 8px' }}>NOTE</p>
-            <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Optional" rows={2} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: `1px solid ${T.border}`, color: T.text2, fontSize: 13, letterSpacing: '-0.02em', resize: 'none', padding: '0 0 8px', fontFamily: T.fontSans, outline: 'none' }} />
+          <div style={{ width: '100%', maxWidth: 360, display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+            {selectedEvent === 'pay' && (
+              <div>
+                <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.textMuted, margin: '0 0 8px' }}>AMOUNT ( INR )</p>
+                <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" style={inputBase} />
+              </div>
+            )}
+
+            {selectedEvent === 'handover' && (
+              <div>
+                <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.textMuted, margin: '0 0 8px' }}>COUNT</p>
+                <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0" style={inputBase} />
+              </div>
+            )}
+
+            {selectedEvent === 'incident' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  onClick={() => setCritical(c => !c)}
+                  style={{ padding: '4px 12px', background: critical ? T.negative : 'transparent', color: critical ? T.invertText : T.text3, border: `1px solid ${critical ? T.negative : T.border}`, fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: 'pointer' }}
+                >
+                  CRITICAL
+                </button>
+                {critical && <p style={{ fontFamily: T.fontSans, fontSize: 10, color: T.negative, margin: 0, letterSpacing: '-0.02em' }}>flagged</p>}
+              </div>
+            )}
+
+            <div>
+              <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.textMuted, margin: '0 0 8px' }}>NOTE</p>
+              <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Optional" rows={2} style={{ ...inputBase, resize: 'none' as const }} />
+            </div>
+
           </div>
         </div>
 
         <div style={{ padding: '16px', display: 'flex', justifyContent: 'center' }}>
-          <button onClick={handleLog} disabled={status === 'loading' || !userPan} style={{ padding: '10px 32px', background: status === 'loading' ? T.surface : T.invertBg, color: status === 'loading' ? T.textMuted : T.invertText, border: `1px solid ${status === 'loading' ? T.border : T.invertBg}`, fontFamily: T.fontSans, fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: status === 'loading' ? 'not-allowed' : 'pointer' }}>
-            {status === 'loading' ? 'LOGGING' : selectedEvent.toUpperCase()}
+          <button
+            onClick={handleLog}
+            disabled={status === 'loading' || !userPan}
+            style={{ padding: '10px 32px', background: status === 'loading' ? T.surface : T.invertBg, color: status === 'loading' ? T.textMuted : T.invertText, border: `1px solid ${status === 'loading' ? T.border : T.invertBg}`, fontFamily: T.fontSans, fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: status === 'loading' ? 'not-allowed' : 'pointer' }}
+          >
+            {status === 'loading' ? 'LOGGING' : selectedEvent === 'clocking' ? (clockedIn ? 'CLOCK OUT' : 'CLOCK IN') : selectedEvent.toUpperCase()}
           </button>
         </div>
 
