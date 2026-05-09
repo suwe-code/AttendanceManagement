@@ -18,6 +18,7 @@ function SignIn({ onSwitch }: { onSwitch: () => void }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [hovered, setHovered] = useState(false)
 
   async function handleSignIn() {
     setLoading(true) ; setError('')
@@ -44,7 +45,9 @@ function SignIn({ onSwitch }: { onSwitch: () => void }) {
             <button
               onClick={handleSignIn}
               disabled={loading}
-              style={{ padding: '6px 25px', background: 'transparent', color: T.text2, border: `1px solid ${T.border}`, fontFamily: T.fontSans, fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1 }}
+              onMouseEnter={() => setHovered(true)}
+              onMouseLeave={() => setHovered(false)}
+              style={{ padding: '6px 25px', background: hovered ? T.surface : 'transparent', color: hovered ? T.text : T.text2, border: `1px solid ${hovered ? T.border : T.border}`, fontFamily: T.fontSans, fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1, transition: 'all 0.15s' }}
             >
               {loading ? 'Signing in' : 'Sign In'}
             </button>
