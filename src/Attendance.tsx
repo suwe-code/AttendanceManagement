@@ -235,9 +235,9 @@ export default function Attendance() {
             onMouseLeave={() => setHoveredEvent(null)}
             style={{
               padding: '6px 10px',
-              background: selectedEvent === 'clocking' ? T.invertBg : hoveredEvent === 'clocking' ? T.surface : 'transparent',
-              color: selectedEvent === 'clocking' ? T.invertText : T.text2,
-              border: `1px solid ${selectedEvent === 'clocking' ? T.invertBg : T.border}`,
+              background: selectedEvent === 'clocking' ? T.surface : hoveredEvent === 'clocking' ? T.elevated : 'transparent',
+              color: selectedEvent === 'clocking' ? T.text : T.text2,
+              border: `1px solid ${selectedEvent === 'clocking' ? T.text2 : T.border}`,
               fontFamily: T.fontSans, fontSize: 10, fontWeight: 500,
               letterSpacing: '-0.04em', textTransform: 'uppercase' as const,
               cursor: 'pointer', transition: 'all 0.15s'
@@ -254,9 +254,9 @@ export default function Attendance() {
               onMouseLeave={() => setHoveredEvent(null)}
               style={{
                 padding: '6px 10px',
-                background: selectedEvent === e.type ? T.invertBg : hoveredEvent === e.type ? T.surface : 'transparent',
-                color: selectedEvent === e.type ? T.invertText : T.text2,
-                border: `1px solid ${selectedEvent === e.type ? T.invertBg : T.border}`,
+                background: selectedEvent === e.type ? T.surface : hoveredEvent === e.type ? T.elevated : 'transparent',
+                color: selectedEvent === e.type ? T.text : T.text2,
+                border: `1px solid ${selectedEvent === e.type ? T.text2 : T.border}`,
                 fontFamily: T.fontSans, fontSize: 10, fontWeight: 500,
                 letterSpacing: '-0.04em', textTransform: 'uppercase' as const,
                 cursor: 'pointer', transition: 'all 0.15s'
@@ -292,7 +292,7 @@ export default function Attendance() {
                 >
                   CRITICAL
                 </button>
-                {critical && <p style={{ fontFamily: T.fontSans, fontSize: 10, color: T.negative, margin: 0, letterSpacing: '-0.02em' }}>flagged</p>}
+                {critical}
               </div>
             )}
 
@@ -308,7 +308,7 @@ export default function Attendance() {
           <button
             onClick={handleLog}
             disabled={status === 'loading' || !userPan}
-            style={{ padding: '10px 32px', background: status === 'loading' ? T.surface : T.invertBg, color: status === 'loading' ? T.textMuted : T.invertText, border: `1px solid ${status === 'loading' ? T.border : T.invertBg}`, fontFamily: T.fontSans, fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: status === 'loading' ? 'not-allowed' : 'pointer' }}
+            style={{ padding: '10px 32px', background: status === 'loading' ? T.elevated : T.surface, color: status === 'loading' ? T.textMuted : T.text, border: `1px solid ${status === 'loading' ? T.border : T.text2}`, fontFamily: T.fontSans, fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: status === 'loading' ? 'not-allowed' : 'pointer' }}
           >
             {status === 'loading' ? 'LOGGING' : 'LOG'}
           </button>
