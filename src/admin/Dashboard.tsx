@@ -59,12 +59,9 @@ export default function Dashboard({ onMenuClick }: { onMenuClick: () => void }) 
   const [people, setPeople] = useState<Record<string, Person>>({})
   const [loading, setLoading] = useState(true)
   const [focusIdx, setFocusIdx] = useState(0)
-
-  // filter state - keep separate committed values to avoid flicker
   const [filterType, setFilterType] = useState('all')
   const [filterTime, setFilterTime] = useState('today')
   const [filterOperator, setFilterOperator] = useState('all')
-
   const stackRef = useRef<HTMLDivElement>(null)
   const cooldown = useRef(false)
 
@@ -81,12 +78,9 @@ export default function Dashboard({ onMenuClick }: { onMenuClick: () => void }) 
     })
   }, [])
 
-  // fetch whenever filters commit
-  useEffect(() => {
-    fetch()
-  }, [filterType, filterTime, filterOperator])
+  useEffect(() => { loadEvents() }, [filterType, filterTime, filterOperator])
 
-  async function fetch() {
+  async function loadEvents() {
     setLoading(true)
     let q = supabase.from('attendance_log').select('*').order('captured_at', { ascending: false }).limit(500)
     const now = new Date()
@@ -107,7 +101,6 @@ export default function Dashboard({ onMenuClick }: { onMenuClick: () => void }) 
     setLoading(false)
   }
 
-  // poll
   useEffect(() => {
     const iv = setInterval(async () => {
       if (!events[0]) return
@@ -117,13 +110,13 @@ export default function Dashboard({ onMenuClick }: { onMenuClick: () => void }) 
     return () => clearInterval(iv)
   }, [events])
 
-  // wheel nav
+  // scroll nav - only inside the carousel area
   useEffect(() => {
     function onWheel(e: WheelEvent) {
       if (cooldown.current || Math.abs(e.deltaY) < 15) return
       cooldown.current = true
       setFocusIdx(i => e.deltaY > 0 ? Math.min(i + 1, events.length - 1) : Math.max(i - 1, 0))
-      setTimeout(() => { cooldown.current = false }, 280)
+      setTimeout(() => { cooldown.current = false }, 250)
     }
     const el = stackRef.current
     el?.addEventListener('wheel', onWheel, { passive: true })
@@ -161,44 +154,23 @@ export default function Dashboard({ onMenuClick }: { onMenuClick: () => void }) 
         <p style={{ fontFamily: A.fontMono, fontSize: 10, letterSpacing: '0.16em', color: A.text3, margin: 0 }}>OVERVIEW OF LIVE EVENTS</p>
       </div>
 
-      {/* CARD CAROUSEL */}
-      <div
-        ref={stackRef}
-        style={{ flex: 1, overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center' }}
-      >
+      {/* CAROUSEL */}
+      <div ref={stackRef} style={{ flex: 1, overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center' }}>
         {loading ? (
           <p style={{ fontFamily: A.fontMono, fontSize: 11, letterSpacing: '0.08em', color: A.textMuted, margin: '0 auto' }}>LOADING EVENTS</p>
         ) : events.length === 0 ? (
           <p style={{ fontFamily: A.fontMono, fontSize: 11, letterSpacing: '0.08em', color: A.textMuted, margin: '0 auto' }}>NO EVENTS FOR THIS FILTER</p>
         ) : (
-          <HoverCarousel events={events} people={people} focusIdx={focusIdx} setFocusIdx={setFocusIdx} />
+          <DeckCarousel events={events} people={people} focusIdx={focusIdx} setFocusIdx={setFocusIdx} />
         )}
       </div>
 
       {/* FILTER BAR */}
       <div style={{ flexShrink: 0, padding: '14px 28px', borderTop: `1px solid ${A.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
-        <FDD
-          label="EVENT TYPE"
-          value={filterType === 'all' ? 'ALL TYPES' : filterType.toUpperCase()}
-          options={EVENT_TYPES.map(t => ({ key: t, label: t === 'all' ? 'ALL TYPES' : t.toUpperCase() }))}
-          onChange={v => { setFilterType(v) }}
-        />
-        <FDD
-          label="OPERATOR"
-          value={filterOperator === 'all' ? 'ALL OPERATORS' : (people[filterOperator]?.name ?? filterOperator)}
-          options={[{ key: 'all', label: 'ALL OPERATORS' }, ...operatorList.map(p => ({ key: p.pan, label: p.name }))]}
-          onChange={v => { setFilterOperator(v) }}
-        />
-        <FDD
-          label="TIME RANGE"
-          value={TIME_RANGES.find(t => t.key === filterTime)?.label ?? 'TODAY'}
-          options={TIME_RANGES.map(t => ({ key: t.key, label: t.label }))}
-          onChange={v => { setFilterTime(v) }}
-        />
-        <button
-          onClick={() => { setFilterType('all') ; setFilterTime('today') ; setFilterOperator('all') }}
-          style={{ background: 'transparent', border: `1px solid ${A.border}`, color: A.text3, padding: '8px 16px', fontFamily: A.fontMono, fontSize: 10, fontWeight: 500, letterSpacing: '0.06em', cursor: 'pointer', height: 58 }}
-        >
+        <FDD label="EVENT TYPE" value={filterType === 'all' ? 'ALL TYPES' : filterType.toUpperCase()} options={EVENT_TYPES.map(t => ({ key: t, label: t === 'all' ? 'ALL TYPES' : t.toUpperCase() }))} onChange={v => setFilterType(v)} />
+        <FDD label="OPERATOR" value={filterOperator === 'all' ? 'ALL OPERATORS' : (people[filterOperator]?.name ?? filterOperator)} options={[{ key: 'all', label: 'ALL OPERATORS' }, ...operatorList.map(p => ({ key: p.pan, label: p.name }))]} onChange={v => setFilterOperator(v)} />
+        <FDD label="TIME RANGE" value={TIME_RANGES.find(t => t.key === filterTime)?.label ?? 'TODAY'} options={TIME_RANGES.map(t => ({ key: t.key, label: t.label }))} onChange={v => setFilterTime(v)} />
+        <button onClick={() => { setFilterType('all') ; setFilterTime('today') ; setFilterOperator('all') }} style={{ background: 'transparent', border: `1px solid ${A.border}`, color: A.text3, padding: '8px 16px', fontFamily: A.fontMono, fontSize: 10, fontWeight: 500, letterSpacing: '0.06em', cursor: 'pointer', height: 58 }}>
           ✕  CLEAR
         </button>
       </div>
@@ -206,55 +178,68 @@ export default function Dashboard({ onMenuClick }: { onMenuClick: () => void }) 
   )
 }
 
-function HoverCarousel({ events, people, focusIdx, setFocusIdx }: {
+// ── DECK CAROUSEL ──
+// scroll / keyboard changes focusIdx
+// hover = subtle opacity lift only , no size change
+// click non-active card = jump to it
+function DeckCarousel({ events, people, focusIdx, setFocusIdx }: {
   events: Evt[]
   people: Record<string, Person>
   focusIdx: number
-  setFocusIdx: (i: number | ((prev: number) => number)) => void
+  setFocusIdx: (i: number | ((p: number) => number)) => void
 }) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
 
   const PAGE_SIZE = 60
   const pageStart = Math.floor(focusIdx / PAGE_SIZE) * PAGE_SIZE
   const visible = events.slice(pageStart, pageStart + PAGE_SIZE)
-  const activeInPage = hoveredIdx !== null ? hoveredIdx : (focusIdx - pageStart)
+  const activeInPage = focusIdx - pageStart
 
   return (
-    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6, padding: '0 32px' }}>
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8, padding: '0 32px' }}>
 
       {/* counter + page nav */}
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16 }}>
         {pageStart > 0 && (
           <button onClick={() => setFocusIdx(pageStart - 1)} style={{ background: 'transparent', border: `1px solid ${A.border}`, color: A.text3, padding: '2px 10px', fontFamily: A.fontMono, fontSize: 10, cursor: 'pointer' }}>← PREV</button>
         )}
-        <span style={{ fontFamily: A.fontMono, fontSize: 9, color: A.text3, letterSpacing: '0.06em' }}>
-          {focusIdx + 1} / {events.length}
-        </span>
+        <span style={{ fontFamily: A.fontMono, fontSize: 9, color: A.text3, letterSpacing: '0.06em' }}>{focusIdx + 1} / {events.length}</span>
         {pageStart + PAGE_SIZE < events.length && (
           <button onClick={() => setFocusIdx(pageStart + PAGE_SIZE)} style={{ background: 'transparent', border: `1px solid ${A.border}`, color: A.text3, padding: '2px 10px', fontFamily: A.fontMono, fontSize: 10, cursor: 'pointer' }}>NEXT →</button>
         )}
       </div>
 
-      {/* card row - 3D perspective, all same height, active left, rest fan right */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%', height: 300, gap: 3, perspective: '1000px', perspectiveOrigin: '0% 50%', paddingLeft: '7.5%', paddingRight: '7.5%', boxSizing: 'border-box' }}>
+      {/* deck */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        width: '100%',
+        height: 300,
+        gap: 3,
+        paddingLeft: '7.5%',
+        paddingRight: '7.5%',
+        boxSizing: 'border-box',
+      }}>
         {visible.map((evt, j) => {
           const globalIdx = pageStart + j
           const isActive = j === activeInPage
+          const isHovered = hoveredIdx === j
           const dist = j - activeInPage
           const person = people[evt.pan]
           const col = evtColor(evt)
           const lbl = evtLabel(evt)
 
-          // cards to the right of active fan away
-          const rotateY = isActive ? 0 : Math.min(dist * 5, 55)
-          const op = isActive ? 1 : Math.max(0.2, 1 - Math.abs(dist) * 0.035)
+          // no rotation - all cards same width, just opacity changes
+          const op = isActive ? 1 : isHovered ? 0.65 : Math.max(0.2, 1 - Math.abs(dist) * 0.03)
+          const borderColor = isActive ? A.text : isHovered ? A.border : A.divider
 
           return (
             <div
               key={evt.id}
               onMouseEnter={() => setHoveredIdx(j)}
               onMouseLeave={() => setHoveredIdx(null)}
-              onClick={() => { setFocusIdx(globalIdx) ; setHoveredIdx(j) }}
+              onClick={() => !isActive && setFocusIdx(globalIdx)}
               style={{
                 flexBasis: isActive ? 300 : 18,
                 flexGrow: 0,
@@ -262,18 +247,17 @@ function HoverCarousel({ events, people, focusIdx, setFocusIdx }: {
                 height: 300,
                 position: 'relative',
                 background: A.surface,
-                border: `1px solid ${isActive ? A.accent : A.divider}`,
+                border: `1px solid ${borderColor}`,
                 cursor: isActive ? 'default' : 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)',
+                transition: 'all 0.28s cubic-bezier(0.4,0,0.2,1)',
                 overflow: 'hidden',
                 opacity: op,
-                transform: `rotateY(${rotateY}deg)`,
-                transformOrigin: 'left center',
               }}
             >
+              {/* event type color bar */}
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: col, zIndex: 2 }} />
 
-              {/* collapsed */}
+              {/* collapsed view */}
               {!isActive && (
                 <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 14, gap: 6 }}>
                   <span style={{ fontFamily: A.fontMono, fontSize: 8, color: col, letterSpacing: '0.06em', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{lbl}</span>
@@ -281,7 +265,7 @@ function HoverCarousel({ events, people, focusIdx, setFocusIdx }: {
                 </div>
               )}
 
-              {/* expanded */}
+              {/* active card - full detail */}
               {isActive && (
                 <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
                   <div style={{ padding: '10px 14px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${A.divider}`, flexShrink: 0 }}>
@@ -332,10 +316,7 @@ function FDD({ label, value, options, onChange }: { label: string ; value: strin
   const [open, setOpen] = useState(false)
   return (
     <div style={{ position: 'relative' }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{ background: A.surface, border: `1px solid ${A.border}`, padding: '8px 16px', minWidth: 180, display: 'flex', flexDirection: 'column', gap: 3, cursor: 'pointer', textAlign: 'left', height: 58 }}
-      >
+      <button onClick={() => setOpen(o => !o)} style={{ background: A.surface, border: `1px solid ${A.border}`, padding: '8px 16px', minWidth: 180, display: 'flex', flexDirection: 'column', gap: 3, cursor: 'pointer', textAlign: 'left', height: 58 }}>
         <span style={{ fontFamily: A.fontMono, fontSize: 9, fontWeight: 500, letterSpacing: '0.08em', color: A.text3 }}>{label}</span>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
           <span style={{ fontFamily: A.fontMono, fontSize: 12, fontWeight: 500, letterSpacing: '0.04em', color: A.text }}>{value}</span>
@@ -347,11 +328,7 @@ function FDD({ label, value, options, onChange }: { label: string ; value: strin
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 50 }} />
           <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: 4, background: A.elevated, border: `1px solid ${A.border}`, minWidth: 180, maxHeight: 240, overflowY: 'auto', zIndex: 51 }}>
             {options.map(o => (
-              <button
-                key={o.key}
-                onClick={() => { onChange(o.key) ; setOpen(false) }}
-                style={{ display: 'block', width: '100%', padding: '9px 16px', background: o.key === value ? A.surface : 'transparent', border: 'none', borderBottom: `1px solid ${A.divider}`, color: A.text2, fontFamily: A.fontMono, fontSize: 11, cursor: 'pointer', textAlign: 'left' }}
-              >
+              <button key={o.key} onClick={() => { onChange(o.key) ; setOpen(false) }} style={{ display: 'block', width: '100%', padding: '9px 16px', background: o.key === value ? A.surface : 'transparent', border: 'none', borderBottom: `1px solid ${A.divider}`, color: A.text2, fontFamily: A.fontMono, fontSize: 11, cursor: 'pointer', textAlign: 'left' }}>
                 {o.label}
               </button>
             ))}

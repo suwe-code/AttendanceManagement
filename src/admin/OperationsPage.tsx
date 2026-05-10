@@ -170,7 +170,7 @@ export default function OperationsPage({ onMenuClick }: { onMenuClick: () => voi
         <div style={{ padding: '16px', borderBottom: `1px solid ${A.border}`, display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <button onClick={onMenuClick} style={{ background: 'transparent', border: `1px solid ${A.border}`, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: A.text2, fontSize: 14, fontFamily: A.fontMono, flexShrink: 0 }}>≡</button>
           <p style={{ fontFamily: A.fontMono, fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', color: A.text, margin: 0 }}>OPERATIONS</p>
-          <button onClick={() => setShowCreate(true)} style={{ marginLeft: 'auto', background: A.accent, border: 'none', color: A.bg, padding: '4px 10px', fontFamily: A.fontMono, fontSize: 9, fontWeight: 500, cursor: 'pointer' }}>+ NEW</button>
+          <button onClick={() => setShowCreate(true)} style={{ marginLeft: 'auto', background: A.invertBg, border: 'none', color: A.invertText, padding: '4px 10px', fontFamily: A.fontMono, fontSize: 9, fontWeight: 500, cursor: 'pointer' }}>+ NEW</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {loading ? <p style={{ fontFamily: A.fontMono, fontSize: 10, color: A.textMuted, padding: 16 }}>LOADING</p>
@@ -233,14 +233,14 @@ export default function OperationsPage({ onMenuClick }: { onMenuClick: () => voi
                   </div>
                   <div style={{ display: 'flex', gap: 4 }}>
                     {['operator', 'admin'].map(r => (
-                      <button key={r} onClick={() => setAddRole(r)} style={{ padding: '4px 8px', fontFamily: A.fontMono, fontSize: 9, background: addRole === r ? A.accent : 'transparent', color: addRole === r ? A.bg : A.text3, border: `1px solid ${addRole === r ? A.accent : A.border}`, cursor: 'pointer' }}>{r.toUpperCase()}</button>
+                      <button key={r} onClick={() => setAddRole(r)} style={{ padding: '4px 8px', fontFamily: A.fontMono, fontSize: 9, background: addRole === r ? A.invertBg : 'transparent', color: addRole === r ? A.invertText : A.text3, border: `1px solid ${addRole === r ? A.border : A.border}`, cursor: 'pointer' }}>{r.toUpperCase()}</button>
                     ))}
                   </div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                <button onClick={createOp} disabled={saving} style={{ background: A.accent, border: 'none', color: A.bg, padding: '8px 20px', fontFamily: A.fontMono, fontSize: 10, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.5 : 1 }}>{saving ? 'CREATING' : 'CREATE'}</button>
+                <button onClick={createOp} disabled={saving} style={{ background: A.invertBg, border: 'none', color: A.invertText, padding: '8px 20px', fontFamily: A.fontMono, fontSize: 10, fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.5 : 1 }}>{saving ? 'CREATING' : 'CREATE'}</button>
                 <button onClick={() => { setShowCreate(false) ; setCreateMembers([]) ; setCreateSearch('') }} style={{ background: 'transparent', border: `1px solid ${A.border}`, color: A.text3, padding: '8px 20px', fontFamily: A.fontMono, fontSize: 10, cursor: 'pointer' }}>CANCEL</button>
               </div>
             </div>
@@ -314,7 +314,7 @@ export default function OperationsPage({ onMenuClick }: { onMenuClick: () => voi
                       </div>
                       <div style={{ display: 'flex', gap: 4 }}>
                         {['operator', 'admin'].map(r => (
-                          <button key={r} onClick={() => setAddRole(r)} style={{ padding: '4px 10px', fontFamily: A.fontMono, fontSize: 10, background: addRole === r ? A.accent : 'transparent', color: addRole === r ? A.bg : A.text3, border: `1px solid ${addRole === r ? A.accent : A.border}`, cursor: 'pointer' }}>{r.toUpperCase()}</button>
+                          <button key={r} onClick={() => setAddRole(r)} style={{ padding: '4px 10px', fontFamily: A.fontMono, fontSize: 10, background: addRole === r ? A.invertBg : 'transparent', color: addRole === r ? A.invertText : A.text3, border: `1px solid ${addRole === r ? A.border : A.border}`, cursor: 'pointer' }}>{r.toUpperCase()}</button>
                         ))}
                       </div>
                     </div>

@@ -51,7 +51,7 @@ export default function AdminApp() {
       {navOpen && (
         <div
           onClick={() => setNavOpen(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(6,8,12,0.92)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(13,13,13,0.96)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
           <div onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 260 }}>
             <p style={{ fontFamily: A.fontMono, fontSize: 9, letterSpacing: '0.12em', color: A.text3, marginBottom: 8 }}>NAVIGATION</p>
@@ -61,8 +61,8 @@ export default function AdminApp() {
                 onClick={() => { setPage(p) ; setNavOpen(false) }}
                 style={{
                   background: page === p ? A.surface : 'transparent',
-                  border: `1px solid ${page === p ? A.accent : A.border}`,
-                  color: page === p ? A.accent : A.text2,
+                  border: `1px solid ${page === p ? A.text : A.border}`,
+                  color: page === p ? A.text : A.text2,
                   padding: '14px 24px',
                   fontFamily: A.fontMono, fontSize: 11, fontWeight: 500,
                   letterSpacing: '0.08em', textTransform: 'uppercase',

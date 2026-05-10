@@ -102,7 +102,7 @@ export default function OperatorsPage({ onMenuClick }: { onMenuClick: () => void
                 <p style={{ fontFamily: A.fontSans, fontSize: 12, fontWeight: 500, color: A.text, margin: '0 0 2px' }}>{p.name}</p>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <span style={{ fontFamily: A.fontMono, fontSize: 9, color: A.text3 }}>{p.pan}</span>
-                  <span style={{ fontFamily: A.fontMono, fontSize: 9, color: (p.role === 'admin' || p.role === 'super_admin') ? A.accent : A.text3, letterSpacing: '0.04em' }}>{(p.role ?? 'operator').toUpperCase()}</span>
+                  <span style={{ fontFamily: A.fontMono, fontSize: 9, color: (p.role === 'admin' || p.role === 'super_admin') ? A.text : A.text3, letterSpacing: '0.04em' }}>{(p.role ?? 'operator').toUpperCase()}</span>
                 </div>
               </button>
             ))}
