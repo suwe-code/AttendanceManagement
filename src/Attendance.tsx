@@ -265,37 +265,30 @@ export default function Attendance() {
           ))}
         </div>
 
-        <div style={{ padding: '12px 16px', borderBottom: `1px solid ${T.divider}`, display: 'flex', justifyContent: 'center', minHeight: 130 }}>
+        <div style={{ padding: '12px 16px', borderBottom: `1px solid ${T.divider}`, display: 'flex', justifyContent: 'center', minHeight: 160 }}>
           <div style={{ width: '100%', maxWidth: 360, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-            {selectedEvent === 'pay' && (
-              <div>
-                <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.textMuted, margin: '0 0 8px' }}>AMOUNT ( INR )</p>
-                <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" style={inputBase} />
-              </div>
-            )}
+            {/* amount field - shown for pay and handover, hidden for others - space always reserved */}
+            <div style={{ visibility: (selectedEvent === 'pay' || selectedEvent === 'handover') ? 'visible' : 'hidden' }}>
+              <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.textMuted, margin: '0 0 8px' }}>
+                {selectedEvent === 'pay' ? 'AMOUNT ( INR )' : 'COUNT'}
+              </p>
+              <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder={selectedEvent === 'pay' ? '0.00' : '0'} style={inputBase} />
+            </div>
 
-            {selectedEvent === 'handover' && (
-              <div>
-                <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.textMuted, margin: '0 0 8px' }}>COUNT</p>
-                <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0" style={inputBase} />
-              </div>
-            )}
-
-            {selectedEvent === 'incident' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <button
-                  onClick={() => setCritical(c => !c)}
-                  style={{ padding: '4px 12px', background: critical ? T.negative : 'transparent', color: critical ? T.invertText : T.text3, border: `1px solid ${critical ? T.negative : T.border}`, fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: 'pointer' }}
-                >
-                  CRITICAL
-                </button>
-                {critical && <p style={{ fontFamily: T.fontSans, fontSize: 10, color: T.negative, margin: 0, letterSpacing: '-0.02em' }}>flagged</p>}
-              </div>
-            )}
-
+            {/* critical toggle - shown for incident, hidden for others */}
             <div>
-              <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.textMuted, margin: '0 0 8px' }}>NOTE</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: T.textMuted, margin: 0 }}>NOTE</p>
+                {selectedEvent === 'incident' && (
+                  <button
+                    onClick={() => setCritical(c => !c)}
+                    style={{ padding: '3px 10px', background: critical ? T.negative : 'transparent', color: critical ? T.invertText : T.text3, border: `1px solid ${critical ? T.negative : T.border}`, fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: 'pointer' }}
+                  >
+                    CRITICAL
+                  </button>
+                )}
+              </div>
               <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Optional" rows={2} style={{ ...inputBase, resize: 'none' as const }} />
             </div>
 
@@ -308,7 +301,7 @@ export default function Attendance() {
             disabled={status === 'loading' || !userPan}
             style={{ padding: '10px 32px', background: status === 'loading' ? T.surface : T.invertBg, color: status === 'loading' ? T.textMuted : T.invertText, border: `1px solid ${status === 'loading' ? T.border : T.invertBg}`, fontFamily: T.fontSans, fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: status === 'loading' ? 'not-allowed' : 'pointer' }}
           >
-            {status === 'loading' ? 'LOGGING' : selectedEvent === 'clocking' ? (clockedIn ? 'CLOCK OUT' : 'CLOCK IN') : selectedEvent.toUpperCase()}
+            {status === 'loading' ? 'LOGGING' : 'LOG'}
           </button>
         </div>
 
