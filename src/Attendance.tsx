@@ -19,6 +19,7 @@ export default function Attendance() {
   const [selectedEvent, setSelectedEvent] = useState<EventType>('clocking')
   const [userPan, setUserPan] = useState<string | null>(null)
   const [clockedIn, setClockedIn] = useState(false)
+  const [hoveredEvent, setHoveredEvent] = useState<string | null>(null)
 
   useEffect(() => {
     startCamera(facingMode)
@@ -44,8 +45,7 @@ export default function Attendance() {
             .limit(1)
             .maybeSingle()
             .then(({ data: last }) => {
-              const isIn = last?.amount === 1
-              setClockedIn(isIn)
+              setClockedIn(last?.amount === 1)
             })
         })
     })
@@ -96,14 +96,6 @@ export default function Attendance() {
   async function handleLog() {
     if (!coords) { setMessage('Waiting for GPS') ; return }
     if (!userPan) { setMessage('User not loaded') ; return }
-
-    if (selectedEvent === 'clocking' && clockedIn) {
-      setStatus('error') ; setMessage('Already clocked in . clock out first .')
-      setTimeout(() => { setStatus('idle') ; setMessage('') }, 3000) ; return
-    }
-    if (selectedEvent === 'clocking' && !clockedIn) {
-      // allow clock in
-    }
 
     const video = videoRef.current
     const canvas = canvasRef.current
@@ -239,27 +231,37 @@ export default function Attendance() {
         <div style={{ display: 'flex', gap: 6, padding: '12px 16px', borderBottom: `1px solid ${T.divider}`, justifyContent: 'center', flexWrap: 'wrap' as const }}>
           <button
             onClick={() => setSelectedEvent('clocking')}
+            onMouseEnter={() => setHoveredEvent('clocking')}
+            onMouseLeave={() => setHoveredEvent(null)}
             style={{
               padding: '6px 10px',
-              background: selectedEvent === 'clocking' ? T.invertBg : 'transparent',
+              background: selectedEvent === 'clocking' ? T.invertBg : hoveredEvent === 'clocking' ? T.surface : 'transparent',
               color: selectedEvent === 'clocking' ? T.invertText : T.text2,
               border: `1px solid ${selectedEvent === 'clocking' ? T.invertBg : T.border}`,
               fontFamily: T.fontSans, fontSize: 10, fontWeight: 500,
-              letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: 'pointer'
+              letterSpacing: '-0.04em', textTransform: 'uppercase' as const,
+              cursor: 'pointer', transition: 'all 0.15s'
             }}
           >
             {clockedIn ? 'CLOCK OUT' : 'CLOCK IN'}
           </button>
 
           {nonClockEvents.map(e => (
-            <button key={e.type} onClick={() => setSelectedEvent(e.type)} style={{
-              padding: '6px 10px',
-              background: selectedEvent === e.type ? T.invertBg : 'transparent',
-              color: selectedEvent === e.type ? T.invertText : T.text2,
-              border: `1px solid ${selectedEvent === e.type ? T.invertBg : T.border}`,
-              fontFamily: T.fontSans, fontSize: 10, fontWeight: 500,
-              letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: 'pointer'
-            }}>
+            <button
+              key={e.type}
+              onClick={() => setSelectedEvent(e.type)}
+              onMouseEnter={() => setHoveredEvent(e.type)}
+              onMouseLeave={() => setHoveredEvent(null)}
+              style={{
+                padding: '6px 10px',
+                background: selectedEvent === e.type ? T.invertBg : hoveredEvent === e.type ? T.surface : 'transparent',
+                color: selectedEvent === e.type ? T.invertText : T.text2,
+                border: `1px solid ${selectedEvent === e.type ? T.invertBg : T.border}`,
+                fontFamily: T.fontSans, fontSize: 10, fontWeight: 500,
+                letterSpacing: '-0.04em', textTransform: 'uppercase' as const,
+                cursor: 'pointer', transition: 'all 0.15s'
+              }}
+            >
               {e.label}
             </button>
           ))}
@@ -308,7 +310,7 @@ export default function Attendance() {
             disabled={status === 'loading' || !userPan}
             style={{ padding: '10px 32px', background: status === 'loading' ? T.surface : T.invertBg, color: status === 'loading' ? T.textMuted : T.invertText, border: `1px solid ${status === 'loading' ? T.border : T.invertBg}`, fontFamily: T.fontSans, fontSize: 11, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, cursor: status === 'loading' ? 'not-allowed' : 'pointer' }}
           >
-            {status === 'loading' ? 'LOGGING' : selectedEvent === 'clocking' ? (clockedIn ? 'CLOCK OUT' : 'CLOCK IN') : selectedEvent.toUpperCase()}
+            {status === 'loading' ? 'LOGGING' : 'LOG'}
           </button>
         </div>
 

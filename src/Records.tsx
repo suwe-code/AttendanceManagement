@@ -12,6 +12,7 @@ type AttendanceRecord = {
   event_type: string
   note: string | null
   session_id: string | null
+  amount: number | null
 }
 
 function calcTodayHours(records: AttendanceRecord[]): number {
@@ -24,9 +25,9 @@ function calcTodayHours(records: AttendanceRecord[]): number {
   let loginTime: number | null = null
 
   for (const r of todayRecords) {
-    if (r.event_type === 'clockin') {
+    if (r.event_type === 'clocking' && r.amount === 1) {
       loginTime = new Date(r.captured_at).getTime()
-    } else if (r.event_type === 'clockout' && loginTime !== null) {
+    } else if (r.event_type === 'clocking' && r.amount === 0 && loginTime !== null) {
       total += new Date(r.captured_at).getTime() - loginTime
       loginTime = null
     }
@@ -63,12 +64,12 @@ function HoursBar({ hours, max = 9 }: { hours: number, max?: number }) {
   )
 }
 
-const eventColors: Record<string, string> = {
-  clockin: T.positive,
-  clockout: T.text2,
-  handover: T.text3,
-  pay: T.text3,
-  incident: T.text3,
+function getEventColor(event_type: string, amount: number | null): string {
+  if (event_type === 'incident') return amount === 1 ? T.negative : T.text3
+  if (event_type === 'clocking') return T.text2
+  if (event_type === 'handover') return T.text3
+  if (event_type === 'pay') return T.text3
+  return T.text2
 }
 
 export default function Records({ onOpenProfile }: { onOpenProfile: () => void }) {
@@ -145,7 +146,7 @@ export default function Records({ onOpenProfile }: { onOpenProfile: () => void }
             <div style={{ flex: 1, padding: '9px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 3, minWidth: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <p style={{ fontFamily: T.fontSans, fontSize: 13, fontWeight: 500, color: T.text, letterSpacing: '-0.02em', margin: 0 }}>{userName}</p>
-                <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: eventColors[r.event_type] ?? T.text2, margin: 0 }}>
+                <p style={{ fontFamily: T.fontSans, fontSize: 10, fontWeight: 500, letterSpacing: '-0.04em', textTransform: 'uppercase' as const, color: getEventColor(r.event_type, r.amount), margin: 0 }}>
                   {r.event_type}
                 </p>
               </div>
