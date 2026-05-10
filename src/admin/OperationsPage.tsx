@@ -109,12 +109,6 @@ export default function OperationsPage({ onMenuClick }: { onMenuClick: () => voi
     if (selected) { loadMembers(selected.id) ; loadOpLogs(selected.id) }
   }
 
-  async function settle(id: string) {
-    const now = new Date().toISOString()
-    await supabase.from('attendance_log').update({ settled_at: now }).eq('id', id)
-    setOpLogs(prev => prev.map(l => l.id === id ? { ...l, settled_at: now } : l))
-  }
-
   const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
 
   function evtColor(e: LogEntry) {
