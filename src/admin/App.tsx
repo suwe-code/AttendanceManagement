@@ -9,18 +9,13 @@ import AdminApp from './admin/AdminApp'
 
 export default function App() {
   const [session, setSession] = useState<any>(null)
-  const [sessionLoading, setSessionLoading] = useState(true)
   const [tab, setTab] = useState<'attendance' | 'records'>('attendance')
   const [showProfile, setShowProfile] = useState(false)
   const [route, setRoute] = useState(window.location.hash)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setSessionLoading(false)
-    })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
-    return () => subscription.unsubscribe()
+    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    supabase.auth.onAuthStateChange((_e, s) => setSession(s))
   }, [])
 
   useEffect(() => {
@@ -29,13 +24,14 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
-  if (sessionLoading) return null
-
-  if (!session) return <Login />
-
+  // admin route
   if (route === '#/admin' || route.startsWith('#/admin/')) {
+    if (!session) return <Login />
     return <AdminApp />
   }
+
+  // operator app
+  if (!session) return <Login />
 
   return (
     <div style={{ width: '100%', height: '100dvh', background: T.bg, display: 'flex', justifyContent: 'center' }}>
