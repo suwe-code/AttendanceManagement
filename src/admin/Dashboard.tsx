@@ -143,8 +143,6 @@ export default function Dashboard({ onMenuClick }: { onMenuClick: () => void }) 
   const dateStr = clock.toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()
   const operatorList = Object.values(people)
 
-  const VISIBLE = 8
-
   return (
     <div style={{ width: '100%', height: '100vh', background: A.bg, color: A.text, fontFamily: A.fontSans, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 

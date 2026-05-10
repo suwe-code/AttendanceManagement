@@ -386,7 +386,7 @@ function OpJournal({ entries, evtColor, evtLabel, fmtTime, personMap }: { entrie
   )
 }
 
-function OpLedger({ entries, totalPay, pendingPay, onSettle, fmtTime, personMap }: { entries: LogEntry[], totalPay: number, pendingPay: number, onSettle: (id: string) => void, fmtTime: (s: string) => string, personMap: Record<string, Person> }) {
+function OpLedger({ entries, totalPay, pendingPay, fmtTime, personMap }: { entries: LogEntry[], totalPay: number, pendingPay: number, fmtTime: (s: string) => string, personMap: Record<string, Person> }) {
   return (
     <div style={{ padding: '0 24px' }}>
       <div style={{ display: 'flex', gap: 8, padding: '14px 0', borderBottom: `1px solid ${A.border}`, flexWrap: 'wrap' }}>
