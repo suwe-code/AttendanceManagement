@@ -336,7 +336,7 @@ export default function OperationsPage({ onMenuClick }: { onMenuClick: () => voi
 
               {tab === 'ledger' && (
                 loadingDetail ? <p style={{ fontFamily: A.fontMono, fontSize: 10, color: A.textMuted, padding: 24 }}>LOADING</p> : (
-                  <OpLedger entries={ledgerEntries} totalPay={totalPay} pendingPay={pendingPay} onSettle={settle} fmtTime={fmtTime} personMap={personMap} />
+                  <OpLedger entries={ledgerEntries} totalPay={totalPay} pendingPay={pendingPay} fmtTime={fmtTime} personMap={personMap} />
                 )
               )}
 

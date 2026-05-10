@@ -319,55 +319,6 @@ function HoverCarousel({ events, people, focusIdx, setFocusIdx }: {
   )
 }
 
-function FocusedCard({ evt, person, col, lbl }: { evt: Evt, person?: Person, col: string, lbl: string }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '14px 20px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${A.divider}` }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontFamily: A.fontMono, fontSize: 12, color: A.text3 }}>→</span>
-          <span style={{ fontFamily: A.fontMono, fontSize: 11, fontWeight: 500, letterSpacing: '0.06em', color: col }}>EVENT · {lbl}</span>
-        </div>
-        <span style={{ fontFamily: A.fontMono, fontSize: 12, color: A.text3 }}>{fmtTime(evt.captured_at)}</span>
-      </div>
-      {evt.image_url && (
-        <div style={{ width: '100%', height: 110, overflow: 'hidden', borderBottom: `1px solid ${A.divider}` }}>
-          <img src={evt.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-        </div>
-      )}
-      <div style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: `1px solid ${A.divider}` }}>
-        <div style={{ width: 32, height: 32, background: A.elevated, border: `1px solid ${A.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <span style={{ fontFamily: A.fontMono, fontSize: 11, color: A.text3 }}>{(person?.name?.[0] ?? '?').toUpperCase()}</span>
-        </div>
-        <div>
-          <p style={{ fontFamily: A.fontSans, fontSize: 14, fontWeight: 500, color: A.text, letterSpacing: '-0.02em', margin: 0 }}>{person?.name ?? evt.pan}</p>
-          <p style={{ fontFamily: A.fontMono, fontSize: 10, color: A.text3, margin: 0 }}>{evt.pan} · {person?.role ?? 'Operator'}</p>
-        </div>
-      </div>
-      <div style={{ padding: '12px 20px', display: 'flex', flexDirection: 'column', gap: 7 }}>
-        <DR icon="◷" text={fmtTime(evt.captured_at)} />
-        <DR icon="▪" text={fmtDate(evt.captured_at)} />
-        <DR icon="◎" text={fmtCoord(evt.lat, evt.lng)} />
-        <DR icon="▤" text={evtDetail(evt)} />
-        {evt.note && <DR icon="✎" text={evt.note} />}
-      </div>
-    </div>
-  )
-}
-
-function MiniCard({ evt, person, col, lbl, isPrev }: { evt: Evt, person?: Person, col: string, lbl: string, isPrev: boolean }) {
-  return (
-    <div style={{ padding: '10px 10px', display: 'flex', flexDirection: 'column', gap: 6, height: '100%' }}>
-      <span style={{ fontFamily: A.fontMono, fontSize: 9, color: col, letterSpacing: '0.04em' }}>{lbl}</span>
-      {isPrev && evt.image_url && (
-        <div style={{ width: '100%', height: 100, overflow: 'hidden', border: `1px solid ${A.divider}` }}>
-          <img src={evt.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-        </div>
-      )}
-      {isPrev && <p style={{ fontFamily: A.fontSans, fontSize: 11, fontWeight: 500, color: A.text, margin: 0 }}>{person?.name ?? evt.pan}</p>}
-    </div>
-  )
-}
-
 function DR({ icon, text }: { icon: string, text: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
