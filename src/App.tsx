@@ -33,6 +33,12 @@ export default function App() {
 
   if (!session) return <Login />
 
+  const isAdminSite = import.meta.env.VITE_APP_MODE === 'office'
+
+  if (isAdminSite) {
+    return <AdminApp />
+  }
+
   if (route === '#/admin' || route.startsWith('#/admin/')) {
     return <AdminApp />
   }
