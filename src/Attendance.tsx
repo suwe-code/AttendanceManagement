@@ -97,14 +97,6 @@ export default function Attendance() {
     if (!coords) { setMessage('Waiting for GPS') ; return }
     if (!userPan) { setMessage('User not loaded') ; return }
 
-    if (selectedEvent === 'clocking' && clockedIn) {
-      setStatus('error') ; setMessage('Already clocked in . clock out first .')
-      setTimeout(() => { setStatus('idle') ; setMessage('') }, 3000) ; return
-    }
-    if (selectedEvent === 'clocking' && !clockedIn) {
-      // allow clock in
-    }
-
     const video = videoRef.current
     const canvas = canvasRef.current
     if (!video || !canvas) return
